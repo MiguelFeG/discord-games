@@ -1,0 +1,263 @@
+const SUPABASE_URL='https://ycmzdvzyiijibwhdbcnd.supabase.co/rest/v1/';
+const SUPABASE_KEY='sb_publishable_dFJA2SvdzFs6B9MoKCaxkg_Uc3X5Jbr';
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DISCORD GAMES · Placar</title>
+<style>
+:root{--bg:#0c0d17;--card:#151728;--tx:#eef0ff;--mut:#9aa0c3;--ac:#5865f2;--bd:#262a45;--gold:#ffc83d;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(900px 400px at 10% -5%,rgba(88,101,242,.28),transparent 60%),radial-gradient(700px 360px at 100% 0,rgba(180,75,255,.18),transparent 60%),var(--bg);background-attachment:fixed;min-height:100vh}
+main{max-width:860px;margin:0 auto;padding:20px 16px 56px}
+button,input,select{font:inherit}
+button{padding:11px 18px;border:0;border-radius:10px;background:var(--ac);color:#fff;font-weight:600;cursor:pointer}
+button:hover{filter:brightness(1.12)}
+button.ghost,.chip{background:var(--card);border:1px solid var(--bd);color:var(--mut);font-weight:400}
+.chip{padding:6px 12px;border-radius:999px;font-size:14px}.chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
+input,select{padding:11px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);width:100%}
+input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.hero{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:14px}
+.bn{font-size:26px;font-weight:900;letter-spacing:.06em;line-height:1}
+.bn span{background:linear-gradient(90deg,#5865f2,#c084fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bs{color:var(--mut);font-size:13px;margin-top:5px}
+.acts{display:flex;gap:8px}
+#login{text-align:center;padding-top:8vh}#login .hero{justify-content:center}
+#dl,#me{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}#dl:empty{display:none}#dl input{width:auto}
+.dl{padding:9px 14px;border-radius:12px;background:linear-gradient(90deg,rgba(88,101,242,.25),rgba(180,75,255,.18));border:1px solid var(--bd);font-size:14px}
+.dl.end{background:linear-gradient(90deg,rgba(255,200,61,.22),rgba(240,165,0,.12))}
+h2.sec{display:flex;align-items:center;gap:12px;font-size:21px;margin:34px 0 14px}
+h2.sec i{font-style:normal;width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none;background:linear-gradient(145deg,#5865f2,#b44bff);box-shadow:0 6px 16px rgba(88,101,242,.35)}
+h2.sec span{display:flex;flex-direction:column;line-height:1.15}
+h2.sec small{font-size:12px;font-weight:400;color:var(--mut);margin-top:3px}
+h2.sec::after{content:"";flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(88,101,242,.6),transparent)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:10px}
+.pd{flex:1;max-width:200px;text-align:center}
+.pd .nm{display:flex;flex-direction:column;align-items:center;gap:6px;font-weight:600;font-size:14px;margin-bottom:6px;overflow-wrap:anywhere}
+.crown{height:28px;font-size:24px}
+.blk{border-radius:12px 12px 0 0;display:flex;flex-direction:column;align-items:center;padding-top:10px;color:#1a1530;font-weight:800}
+.blk b{font-size:30px;line-height:1}.blk span{font-size:12px;font-weight:600;opacity:.75}
+.p1 .blk{height:150px;background:linear-gradient(180deg,#ffd75e,#f0a500)}.p2 .blk{height:122px;background:linear-gradient(180deg,#dfe4f5,#aab2cf)}.p3 .blk{height:104px;background:linear-gradient(180deg,#eaa77c,#c3703f)}
+.av{border-radius:50%;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:none;border:2px solid var(--bd);overflow:hidden}
+.p1 .av{border-color:var(--gold)}.by .av{border-width:1px;vertical-align:middle;margin-right:5px}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.g{position:relative;border-radius:12px;overflow:hidden;background:var(--card);border:1px solid var(--bd);transition:transform .15s}.g:hover{transform:translateY(-3px)}
+.cv{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;font-size:38px;font-weight:800;color:rgba(255,255,255,.9);background-size:cover;background-position:center}
+.pfb{position:absolute;top:6px;left:6px;padding:2px 8px;border-radius:999px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;font-weight:600}
+.cap{padding:8px 10px;font-size:12px;color:var(--mut)}.cap b{display:block;font-size:14px;color:var(--tx);line-height:1.25;overflow-wrap:anywhere}
+.cm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-style:italic;margin-top:6px}
+.pf{display:block;margin:6px 0 0;padding:4px 8px;font-size:12px;background:var(--bd);color:var(--tx)}
+.del{position:absolute;top:6px;right:6px;width:26px;height:26px;padding:0;border-radius:50%;background:rgba(0,0,0,.6);font-size:13px}
+.empty{color:var(--mut);text-align:center;padding:16px 0}
+#ov,#lb{position:fixed;inset:0;background:rgba(5,6,12,.8);display:flex;justify-content:center;padding:16px;overflow:auto;z-index:40}
+#ov{align-items:flex-start}#lb{align-items:center}
+#ov[hidden],#lb[hidden]{display:none}
+#md{width:100%;max-width:560px;margin:4vh 0;position:relative}
+#md h3{margin:0 0 12px;color:var(--mut);font-size:14px;letter-spacing:.08em;text-transform:uppercase}
+#mx{position:absolute;top:12px;right:12px;width:32px;height:32px;padding:0;background:var(--bd);border-radius:50%}
+#f{display:grid;grid-template-columns:1fr 1fr;gap:10px}#f>*{grid-column:1/-1}#f label.h{grid-column:auto}
+label.h{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+.file{padding:10px 12px;border-radius:10px;border:1px dashed var(--bd);color:var(--mut);cursor:pointer;font-size:14px}.file input{display:none}
+label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--bd);border-radius:10px;cursor:pointer;font-size:14px}
+#pv{font-size:13px;color:var(--mut);min-height:1em}
+.lbc{display:flex;flex-direction:column;align-items:center;gap:12px;max-height:100%}.lbc img{max-width:100%;max-height:70vh;border-radius:8px}
+#st{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;max-width:90vw;background:#2a2e52;padding:10px 16px;border-radius:12px;font-size:14px;z-index:70}#st:empty{display:none}
+</style>
+</head>
+<body>
+<main>
+<section id="login" hidden>
+  <div class="hero"><div class="brand"><svg viewBox="0 0 64 64" width="56" height="56"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5865f2"/><stop offset="1" stop-color="#b44bff"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#lg)"/><path d="M18 24h28c5 0 8 4 9 10l2 8c1 4-2 7-6 6-3 0-5-2-7-4H20c-2 2-4 4-7 4-4 1-7-2-6-6l2-8c1-6 4-10 9-10z" fill="#fff"/><path d="M22 29v8M18 33h8" stroke="#5865f2" stroke-width="3" stroke-linecap="round"/><circle cx="41" cy="31" r="2.4" fill="#5865f2"/><circle cx="46" cy="36" r="2.4" fill="#5865f2"/></svg><div class="bn" style="text-align:left">DISCORD <span>GAMES</span></div></div></div>
+  <p style="color:var(--mut)">Entre com sua conta Google para registrar seus jogos zerados.</p>
+  <button id="gl">Entrar com Google</button>
+</section>
+
+<section id="app" hidden>
+  <header class="hero">
+    <div class="brand"><svg viewBox="0 0 64 64" width="56" height="56"><rect width="64" height="64" rx="16" fill="url(#lg)"/><path d="M18 24h28c5 0 8 4 9 10l2 8c1 4-2 7-6 6-3 0-5-2-7-4H20c-2 2-4 4-7 4-4 1-7-2-6-6l2-8c1-6 4-10 9-10z" fill="#fff"/><path d="M22 29v8M18 33h8" stroke="#5865f2" stroke-width="3" stroke-linecap="round"/><circle cx="41" cy="31" r="2.4" fill="#5865f2"/><circle cx="46" cy="36" r="2.4" fill="#5865f2"/></svg>
+    <div><div class="bn">DISCORD <span>GAMES</span></div><div class="bs">Placar de zeradas · quem zerou mais?</div></div></div>
+    <div class="acts"><button data-a="add">➕ Registrar jogo</button><button class="ghost" data-a="out">Sair</button></div>
+  </header>
+  <div id="dl"></div><div id="me"></div>
+  <h2 class="sec"><i>🏆</i><span>Pódio<small>ranking por pontos</small></span></h2>
+  <div class="chips" id="mc"></div><div class="card" id="pod"></div>
+  <h2 class="sec"><i>📚</i><span>Estante<small>toda a coleção da galera</small></span></h2>
+  <div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
+</section>
+</main>
+
+<div id="ov" hidden><div class="card" id="md">
+  <button type="button" id="mx" data-a="close">✕</button><h3 id="mt">Registrar jogo zerado</h3>
+  <form id="f">
+    <input id="t" maxlength="80" placeholder="Nome do jogo" required>
+    <label class="file" id="fl">📷 Capa (opcional)<input type="file" id="img" accept="image/*"></label>
+    <label class="file" id="pl">🧾 Comprovante *<input type="file" id="prf" accept="image/*"></label>
+    <label class="h">Início<input type="date" id="ds"></label>
+    <label class="h">Fim<input type="date" id="dt"></label>
+    <label class="h">Horas jogadas<input type="number" id="hr" min="0.5" max="9999" step="0.5" placeholder="ex: 45"></label>
+    <label class="h">Dificuldade<select id="df"><option value="">Selecione…</option><option value="1">Fácil</option><option value="1.25">Médio</option><option value="1.5">Difícil</option><option value="2">Muito difícil</option></select></label>
+    <label class="h">Plataforma<select id="pf2"><option value="">Selecione…</option><option>PC</option><option>PlayStation</option><option>Xbox</option><option>Nintendo</option><option>Celular</option><option>Outro</option></select></label>
+    <label class="h">Nota (0 a 10)<input type="number" id="nt" min="0" max="10" step="0.5" placeholder="opcional"></label>
+    <input id="cm" maxlength="120" placeholder="Comentário curto (opcional)">
+    <label class="plat"><input type="checkbox" id="pl100"><span>🏅 Platina / 100% <small style="color:var(--mut)">(bônus ×1,5)</small></span></label>
+    <button id="b">Adicionar</button>
+    <div id="pv"></div>
+    <details style="font-size:13px;color:var(--mut)"><summary>Como funcionam os pontos</summary><p>Pontos = (5 + horas × dificuldade) × bônus. Horas contam até 150. Dificuldade: Fácil ×1 · Médio ×1,25 · Difícil ×1,5 · Muito difícil ×2. Platina multiplica por 1,5. Máximo de 16 h por dia no período. Só pontuam jogos confirmados por outro jogador e concluídos dentro do prazo. Desempate: menos horas.</p></details>
+  </form>
+</div></div>
+<div id="lb" hidden></div>
+<p id="st" role="status"></p>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ====== COLE AQUI os dados do seu projeto Supabase ======
+const SUPABASE_URL='COLE_A_PROJECT_URL_AQUI';
+const SUPABASE_KEY='COLE_A_CHAVE_PUBLICA_AQUI';
+// ========================================================
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const CFG={base:5,cap:150,plat:1.5,maxDay:16,confirms:1};
+let me=null,games=[],profs={},confs=[],deadline=null,isAdmin=false,mo='',pf='',editing=null;
+const say=m=>{$('st').textContent=m;clearTimeout(say.t);say.t=setTimeout(()=>$('st').textContent='',6000)};
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const days=g=>Math.round((new Date(g.end_date+'T00:00')-new Date(g.start_date+'T00:00'))/864e5)+1;
+const fd=s=>s?s.split('-').reverse().join('/'):'';
+const name=u=>profs[u]?.name||'Jogador';
+const hue=s=>[...String(s)].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,0);
+const grad=s=>{const h=hue(s);return `linear-gradient(145deg,hsl(${h} 70% 48%),hsl(${(h+55)%360} 70% 28%))`};
+const av=(u,s)=>profs[u]?.avatar_url?`<img class="av" referrerpolicy="no-referrer" style="width:${s}px;height:${s}px" src="${esc(profs[u].avatar_url)}" alt="">`:`<span class="av" style="width:${s}px;height:${s}px;font-size:${s*.4|0}px;background:${grad(u)}">${esc(name(u).slice(0,2).toUpperCase())}</span>`;
+const nconf=g=>confs.filter(c=>c.game_id===g.id&&c.rev===g.rev&&c.user_id!==g.user_id).length;
+const pts=g=>{const p=CFG.base+Math.min(g.hours,CFG.cap)*g.difficulty;return Math.round(g.platinum?p*CFG.plat:p)};
+const counts=g=>nconf(g)>=CFG.confirms&&(!deadline||g.end_date<=deadline)&&(!mo||g.end_date.slice(0,7)===mo);
+const mlab=m=>['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+m.slice(5)-1]+'/'+m.slice(0,4);
+
+function dateErr(g){
+  if(!g.start_date||!g.end_date)return 'Informe as datas de início e fim.';
+  if(g.end_date<g.start_date)return 'A data de fim não pode ser antes do início.';
+  if(g.end_date>today())return 'A data de fim não pode ser no futuro.';
+  const d=days(g);
+  if(g.hours>d*CFG.maxDay)return `Em ${d} ${d===1?'dia':'dias'} dá no máximo ${d*CFG.maxDay} h (${CFG.maxDay} h/dia). Confira as horas ou as datas.`;
+  return '';
+}
+
+async function load(){
+  const [g,p,c,s,a]=await Promise.all([
+    sb.from('games').select('*').order('end_date',{ascending:false}),
+    sb.from('profiles').select('*'),sb.from('confirmations').select('*'),
+    sb.from('settings').select('deadline').eq('id',1).maybeSingle(),
+    sb.from('admins').select('user_id').maybeSingle()]);
+  if(g.error){say('Erro ao carregar os dados: '+g.error.message);return}
+  games=g.data||[];profs=Object.fromEntries((p.data||[]).map(x=>[x.id,x]));confs=c.data||[];
+  deadline=s.data?.deadline||null;isAdmin=!!a.data;render();
+}
+
+function render(){
+  const c={};
+  games.filter(counts).forEach(g=>{const o=c[g.user_id]||(c[g.user_id]={u:g.user_id,n:0,h:0,p:0});o.n++;o.h+=+g.hours;o.p+=pts(g)});
+  const arr=Object.values(c).sort((a,b)=>b.p-a.p||a.h-b.h);
+  const top=arr.slice(0,3),ord=top.length===3?[1,0,2]:top.length===2?[1,0]:[0];
+  $('pod').innerHTML=arr.length?`<div class="podium">${ord.map(i=>{const p=top[i];return `<div class="pd p${i+1}"><div class="crown">${i?'':'👑'}</div><div class="nm">${av(p.u,i?46:56)}<div>${esc(name(p.u))}</div></div><div class="blk"><b>${p.p}</b><span>pts · ${p.n} ${p.n===1?'jogo':'jogos'}</span><span>${Math.round(p.h*10)/10}h</span></div></div>`}).join('')}</div>${arr.length>3?`<p class="cap">Também jogando: ${arr.slice(3).map(p=>`${esc(name(p.u))} (${p.p} pts)`).join(', ')}</p>`:''}`:'<div class="empty">Nenhum jogo confirmado ainda. Registre um jogo e peça para um amigo confirmar o comprovante!</div>';
+  const ms=[...new Set(games.map(g=>g.end_date.slice(0,7)))].sort().reverse();
+  if(mo&&!ms.includes(mo))mo='';
+  $('mc').innerHTML=ms.length?`<button class="chip${mo?'':' on'}" data-m="">Geral</button>`+ms.map(m=>`<button class="chip${mo===m?' on':''}" data-m="${m}">${mlab(m)}</button>`).join(''):'';
+  const owners=[...new Set(games.map(g=>g.user_id))];
+  $('pc').innerHTML=owners.length?`<button class="chip${pf?'':' on'}" data-f="">Todos (${games.length})</button>`+owners.map(u=>`<button class="chip${pf===u?' on':''}" data-f="${u}">${esc(name(u))} (${games.filter(g=>g.user_id===u).length})</button>`).join(''):'';
+  const list=games.filter(g=>!pf||g.user_id===pf);
+  $('shelf').innerHTML=list.map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nada por aqui ainda.</div>';
+  let h='';
+  if(deadline){
+    const left=Math.ceil((new Date(deadline+'T23:59:59')-new Date())/864e5);
+    h=left>=0?`<span class="dl">⏳ ${left===0?'Último dia!':`Faltam <b>${left}</b> ${left===1?'dia':'dias'}`} · encerra em ${fd(deadline)}</span>`:`<span class="dl end">🏁 Competição encerrada em ${fd(deadline)}${arr[0]&&!mo?` · Campeão: <b>${esc(name(arr[0].u))}</b> (${arr[0].p} pts)`:''}</span>`;
+  }
+  if(isAdmin)h+=`<input type="date" id="dli" value="${deadline||''}"><button class="chip" data-a="dls">salvar prazo</button>${deadline?'<button class="chip" data-a="dlc">remover prazo</button>':''}`;
+  $('dl').innerHTML=h;
+  $('me').innerHTML=profs[me]?`${av(me,36)} Jogando como <b>${esc(name(me))}</b> <button class="chip" data-a="nick">trocar apelido</button>`:'';
+}
+
+function card(g){
+  const own=g.user_id===me,n=nconf(g);
+  const meta=[`${g.hours}h`,`${fd(g.start_date)} → ${fd(g.end_date)}`,`${Math.round(g.hours/days(g)*10)/10} h/dia`,g.platinum?'🏅 platina':'',g.rating!=null?`⭐ ${g.rating}`:'',`${pts(g)} pts`,n>=CFG.confirms?'✅ confirmado':'⏳ aguardando confirmação'].filter(Boolean).join(' · ');
+  const ini=g.title.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  return `<div class="g">${g.cover_url?`<div class="cv" style="background-image:url('${esc(g.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(g.title)}">${esc(ini)}</div>`}${g.platform?`<span class="pfb">${esc(g.platform)}</span>`:''}<div class="cap"><b>${esc(g.title)}</b><span class="by">${av(g.user_id,18)}${esc(name(g.user_id))}</span><br>${esc(meta)}${g.comment?`<div class="cm">“${esc(g.comment)}”</div>`:''}<button class="pf" data-a="proof" data-id="${g.id}">🧾 Ver comprovante</button></div>${own?`<button class="del" style="right:38px" data-a="edit" data-id="${g.id}" title="Editar">✎</button><button class="del" data-a="del" data-id="${g.id}" title="Remover">✕</button>`:''}</div>`;
+}
+
+function shrink(file,mw){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=Math.min(mw,im.width),h=Math.round(im.height*w/im.width);if(h>mw*1.5){h=Math.round(mw*1.5);w=Math.round(im.width*h/im.height)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};im.onerror=rej;im.src=u})}
+async function up(file,mw){const b=await shrink(file,mw),path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
+
+function readForm(){return{title:$('t').value.trim(),hours:parseFloat($('hr').value)||0,start_date:$('ds').value,end_date:$('dt').value,difficulty:parseFloat($('df').value)||0,platinum:$('pl100').checked,platform:$('pf2').value||null,rating:$('nt').value===''?null:Math.min(10,Math.max(0,+$('nt').value)),comment:$('cm').value.trim()||null}}
+function pv(){const g=readForm();const e=g.start_date&&g.end_date&&g.hours>0?dateErr(g):'';$('pv').textContent=e||(g.hours>0&&g.difficulty&&g.start_date&&g.end_date?`Este jogo vale ${pts(g)} pontos.`:'')}
+['hr','df','pl100','ds','dt'].forEach(i=>{$(i).addEventListener('input',pv);$(i).addEventListener('change',pv)});
+$('prf').onchange=e=>{$('pl').firstChild.nodeValue=e.target.files[0]?'🧾 '+e.target.files[0].name:'🧾 Comprovante *'};
+$('img').onchange=e=>{$('fl').firstChild.nodeValue=e.target.files[0]?'📷 '+e.target.files[0].name:'📷 Capa (opcional)'};
+
+function openForm(id){
+  editing=id||null;const g=id?games.find(x=>x.id===id):null;$('f').reset();
+  $('fl').firstChild.nodeValue='📷 Capa (opcional)';$('pl').firstChild.nodeValue='🧾 Comprovante *';
+  if(g){$('t').value=g.title;$('hr').value=g.hours;$('ds').value=g.start_date;$('dt').value=g.end_date;$('df').value=String(g.difficulty);$('pl100').checked=g.platinum;$('pf2').value=g.platform||'';$('nt').value=g.rating??'';$('cm').value=g.comment||''}
+  else $('dt').value=today();
+  $('mt').textContent=g?'Editar jogo':'Registrar jogo zerado';$('b').textContent=g?'Salvar alterações':'Adicionar';
+  $('ov').hidden=false;document.body.style.overflow='hidden';pv();
+}
+function closeAll(){$('ov').hidden=true;$('lb').hidden=true;document.body.style.overflow='';editing=null}
+
+$('f').onsubmit=async e=>{
+  e.preventDefault();const btn=$('b');btn.disabled=true;
+  try{
+    const g=readForm(),ed=editing?games.find(x=>x.id===editing):null,pfile=$('prf').files[0],cfile=$('img').files[0];
+    if(!pfile&&!ed)return say('O comprovante é obrigatório.');
+    if(!(g.hours>0)||!g.difficulty)return say('Informe as horas jogadas e a dificuldade.');
+    const de=dateErr(g);if(de)return say(de);
+    g.proof_url=pfile?await up(pfile,1000):ed.proof_url;
+    g.cover_url=cfile?await up(cfile,360):(ed?ed.cover_url:null);
+    const r=ed?await sb.from('games').update(g).eq('id',ed.id):await sb.from('games').insert(g);
+    if(r.error)return say('Não foi possível salvar: '+r.error.message);
+    closeAll();await load();
+  }catch(err){say('Não consegui enviar a imagem. Tente de novo.')}
+  finally{btn.disabled=false}
+};
+
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-a],[data-m],[data-f]');
+  if(e.target.id==='lb'){closeAll();return}
+  if(!t)return;
+  if(t.hasAttribute('data-m')){mo=t.dataset.m;render();return}
+  if(t.hasAttribute('data-f')){pf=t.dataset.f;render();return}
+  const a=t.dataset.a,id=t.dataset.id,g=games.find(x=>x.id===id);
+  if(a==='add')openForm();
+  else if(a==='close')closeAll();
+  else if(a==='edit')openForm(id);
+  else if(a==='out'){await sb.auth.signOut()}
+  else if(a==='del'){if(confirm('Remover este jogo?')){const r=await sb.from('games').delete().eq('id',id);if(r.error)say('Não foi possível remover.');else load()}}
+  else if(a==='nick'){const n=(prompt('Novo apelido:',name(me))||'').trim().slice(0,24);if(n){const r=await sb.from('profiles').update({name:n}).eq('id',me);if(r.error)say('Não foi possível salvar o apelido.');else load()}}
+  else if(a==='dls'||a==='dlc'){const r=await sb.from('settings').update({deadline:a==='dls'?($('dli').value||null):null}).eq('id',1);if(r.error)say('Só o administrador pode definir o prazo.');else load()}
+  else if(a==='proof'&&g){
+    const nc=nconf(g);let ex='';
+    if(g.user_id!==me)ex=confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev)?'<div>✅ Você já confirmou este comprovante</div>':`<button data-a="conf" data-id="${g.id}">✅ Confirmar comprovante</button>`;
+    $('lb').innerHTML=`<div class="lbc"><img src="${esc(g.proof_url)}" alt="Comprovante"><div>${nc} ${nc===1?'confirmação':'confirmações'}</div>${ex}<button class="ghost" data-a="close">Fechar</button></div>`;$('lb').hidden=false;
+  }
+  else if(a==='conf'&&g){const r=await sb.from('confirmations').upsert({game_id:g.id,user_id:me,rev:g.rev},{onConflict:'game_id,user_id'});if(r.error)say('Não foi possível confirmar.');else{closeAll();say('Comprovante confirmado!');load()}}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+
+$('gl').onclick=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
+
+async function boot(s){
+  if(!s){me=null;$('app').hidden=true;$('login').hidden=false;return}
+  if(me===s.user.id)return;
+  me=s.user.id;$('login').hidden=true;$('app').hidden=false;
+  await load();
+  if(!profs[me]){
+    const m=s.user.user_metadata||{},n=((m.name||m.full_name||'Jogador').split(' ')[0]).slice(0,24);
+    await sb.from('profiles').insert({id:me,name:n,avatar_url:m.avatar_url||m.picture||null});
+    await load();
+  }
+}
+sb.auth.onAuthStateChange((_ev,s)=>{setTimeout(()=>boot(s),0)});
+</script>
+</body>
+</html>
