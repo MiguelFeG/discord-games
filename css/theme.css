@@ -1,0 +1,53 @@
+/* Tema: fontes pixel, tamanhos padronizados e efeitos */
+:root{--px:'Press Start 2P',monospace}
+body{font-family:Inter,system-ui,sans-serif;font-size:15px}
+main{position:relative;z-index:1}
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none}
+.cf{position:fixed;inset:0;z-index:99;pointer-events:none}
+.bn{font-family:var(--px);font-size:17px;letter-spacing:.03em;line-height:1.3}
+.bs{font-size:12px}
+h2.sec span{font-family:var(--px);font-size:13px;line-height:1.5}
+h2.sec small{font-family:Inter,sans-serif;font-size:12px;margin-top:4px}
+.blk b{font-family:var(--px);font-size:20px}
+.blk span{font-size:11px}
+.stat b{font-family:var(--px);font-size:13px;line-height:1.6}
+.stat small{font-size:12px;margin-bottom:6px}
+#md h3,.dcard h4{font-family:var(--px);font-size:10px;line-height:1.6;letter-spacing:.04em}
+.dhead h3{font-family:var(--px);font-size:15px;line-height:1.6;text-transform:none;letter-spacing:0}
+.pd .nm{font-size:13px}
+/* cards padronizados */
+.shelf{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.recent .g{flex:0 0 170px}
+.g{display:flex;flex-direction:column}
+.cv{flex:none}
+.cap{display:flex;flex-direction:column;gap:7px;padding:11px 12px;flex:1;font-size:12px}
+.cap b.tt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em;font-size:14px;line-height:1.25}
+.by{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mut)}
+.by .av{margin:0}
+.mt{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.pt{color:var(--gold);font-weight:700}
+.stt{margin-top:auto;align-self:flex-start;font-size:11px;padding:3px 9px;border-radius:999px;font-weight:600}
+.stt.ok{background:rgba(59,165,93,.18);color:#6fe39a}.stt.wait{background:rgba(255,200,61,.14);color:#ffd76a}
+.appr{display:flex;flex-direction:column;gap:8px}
+.ap{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--bd);border-radius:10px;cursor:pointer}
+.ap b{display:block;font-size:14px}.ap small{color:var(--mut);font-size:12px}
+/* brilho */
+button:not(.x):not(.ghost):not(.chip):not(.del){box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 4px 16px rgba(88,101,242,.45);transition:box-shadow .2s,transform .15s}
+button:not(.x):not(.ghost):not(.chip):not(.del):hover{box-shadow:0 0 24px rgba(124,138,255,.85);transform:translateY(-1px)}
+.card,.stat,.g{box-shadow:0 0 0 1px rgba(88,101,242,.14),0 8px 28px rgba(0,0,0,.3);transition:box-shadow .2s,transform .2s}
+.g:hover,.stat:hover{box-shadow:0 0 0 1px rgba(124,138,255,.6),0 0 24px rgba(88,101,242,.45);transform:translateY(-4px)}
+#nav a{transition:box-shadow .2s,color .2s}#nav a:hover{color:#fff}
+#nav a.on{box-shadow:0 0 16px rgba(88,101,242,.65)}
+.p1 .blk{box-shadow:0 0 32px rgba(255,200,61,.45)}
+.p1 .av{box-shadow:0 0 16px rgba(255,200,61,.7)}
+h2.sec i{animation:glow 3s ease-in-out infinite}
+.crown{animation:float 2s ease-in-out infinite}
+/* pódio animado */
+.podium.anim .blk{transform-origin:bottom;animation:rise .9s cubic-bezier(.2,.9,.3,1) both}
+.podium.anim .p2 .blk{animation-delay:.1s}.podium.anim .p1 .blk{animation-delay:.35s}.podium.anim .p3 .blk{animation-delay:.6s}
+.podium.anim .nm,.podium.anim .crown{animation:drop .7s cubic-bezier(.3,1.4,.5,1) both;animation-delay:1s}
+@keyframes rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes drop{from{opacity:0;transform:translateY(-24px)}to{opacity:1;transform:none}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes glow{0%,100%{box-shadow:0 6px 16px rgba(88,101,242,.35)}50%{box-shadow:0 6px 26px rgba(180,75,255,.75)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
