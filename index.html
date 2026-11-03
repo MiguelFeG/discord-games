@@ -64,6 +64,15 @@ label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px
 #pv{font-size:13px;color:var(--mut);min-height:1em}
 .lbc{display:flex;flex-direction:column;align-items:center;gap:12px;max-height:100%}.lbc img{max-width:100%;max-height:70vh;border-radius:8px}
 #st{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;max-width:90vw;background:#2a2e52;padding:10px 16px;border-radius:12px;font-size:14px;z-index:70}#st:empty{display:none}
+#nav{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+#nav a{padding:8px 16px;border-radius:999px;color:var(--mut);text-decoration:none;border:1px solid var(--bd);background:var(--card);font-size:14px}
+#nav a.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.cta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px}.stat small{color:var(--mut);display:block;font-size:12px}.stat b{font-size:20px;overflow-wrap:anywhere}
+.recent{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}.recent .g{flex:0 0 150px}
+.prof{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+.av,.by{cursor:pointer}
 </style>
 </head>
 <body>
@@ -80,11 +89,18 @@ label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px
     <div><div class="bn">DISCORD <span>GAMES</span></div><div class="bs">Placar de zeradas · quem zerou mais?</div></div></div>
     <div class="acts"><button data-a="add">➕ Registrar jogo</button><button class="ghost" data-a="out">Sair</button></div>
   </header>
-  <div id="dl"></div><div id="me"></div>
-  <h2 class="sec"><i>🏆</i><span>Pódio<small>ranking por pontos</small></span></h2>
-  <div class="chips" id="mc"></div><div class="card" id="pod"></div>
-  <h2 class="sec"><i>📚</i><span>Estante<small>toda a coleção da galera</small></span></h2>
-  <div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
+  <nav id="nav"><a href="#/home" data-p="home">🏠 Home</a><a href="#/estante" data-p="estante">📚 Estante</a><a href="#/perfil" data-p="perfil">👤 Perfil</a></nav>
+  <div id="dl"></div>
+  <div id="pg-home">
+    <div class="card cta"><div><b>Zerou um jogo?</b><div class="bs">Registre com comprovante e peça para um amigo confirmar.</div></div><button data-a="add">➕ Registrar jogo</button></div>
+    <h2 class="sec"><i>📊</i><span>Resumo<small>a competição em números</small></span></h2><div class="stats" id="sum"></div>
+    <h2 class="sec"><i>🏆</i><span>Pódio<small>ranking por pontos</small></span></h2><div class="chips" id="mc"></div><div class="card" id="pod"></div>
+    <h2 class="sec"><i>🕹️</i><span>Últimos zerados<small>o que saiu do forno</small></span></h2><div class="recent" id="rec"></div>
+  </div>
+  <div id="pg-estante" hidden>
+    <h2 class="sec"><i>📚</i><span>Estante<small>toda a coleção da galera</small></span></h2><div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
+  </div>
+  <div id="pg-perfil" hidden></div>
 </section>
 </main>
 
@@ -112,7 +128,7 @@ label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-
+// ====== COLE AQUI os dados do seu projeto Supabase ======
 const SUPABASE_URL='https://ycmzdvzyiijibwhdbcnd.supabase.co';
 const SUPABASE_KEY='sb_publishable_dFJA2SvdzFs6B9MoKCaxkg_Uc3X5Jbr';
 // ========================================================
@@ -120,7 +136,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 const $=i=>document.getElementById(i);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const CFG={base:5,cap:150,plat:1.5,maxDay:16,confirms:1};
-let me=null,games=[],profs={},confs=[],deadline=null,isAdmin=false,mo='',pf='',editing=null;
+let gAvatar=null,me=null,games=[],profs={},confs=[],deadline=null,isAdmin=false,mo='',pf='',editing=null;
 const say=m=>{$('st').textContent=m;clearTimeout(say.t);say.t=setTimeout(()=>$('st').textContent='',6000)};
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const days=g=>Math.round((new Date(g.end_date+'T00:00')-new Date(g.start_date+'T00:00'))/864e5)+1;
@@ -128,10 +144,10 @@ const fd=s=>s?s.split('-').reverse().join('/'):'';
 const name=u=>profs[u]?.name||'Jogador';
 const hue=s=>[...String(s)].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,0);
 const grad=s=>{const h=hue(s);return `linear-gradient(145deg,hsl(${h} 70% 48%),hsl(${(h+55)%360} 70% 28%))`};
-const av=(u,s)=>profs[u]?.avatar_url?`<img class="av" referrerpolicy="no-referrer" style="width:${s}px;height:${s}px" src="${esc(profs[u].avatar_url)}" alt="">`:`<span class="av" style="width:${s}px;height:${s}px;font-size:${s*.4|0}px;background:${grad(u)}">${esc(name(u).slice(0,2).toUpperCase())}</span>`;
+const av=(u,s)=>profs[u]?.avatar_url?`<img class="av" data-a="prof" data-id="${u}" referrerpolicy="no-referrer" style="width:${s}px;height:${s}px" src="${esc(profs[u].avatar_url)}" alt="">`:`<span class="av" data-a="prof" data-id="${u}" style="width:${s}px;height:${s}px;font-size:${s*.4|0}px;background:${grad(u)}">${esc(name(u).slice(0,2).toUpperCase())}</span>`;
 const nconf=g=>confs.filter(c=>c.game_id===g.id&&c.rev===g.rev&&c.user_id!==g.user_id).length;
 const pts=g=>{const p=CFG.base+Math.min(g.hours,CFG.cap)*g.difficulty;return Math.round(g.platinum?p*CFG.plat:p)};
-const counts=g=>nconf(g)>=CFG.confirms&&(!deadline||g.end_date<=deadline)&&(!mo||g.end_date.slice(0,7)===mo);
+const ok=g=>nconf(g)>=CFG.confirms&&(!deadline||g.end_date<=deadline);const counts=g=>ok(g)&&(!mo||g.end_date.slice(0,7)===mo);
 const mlab=m=>['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][+m.slice(5)-1]+'/'+m.slice(0,4);
 
 function dateErr(g){
@@ -154,38 +170,61 @@ async function load(){
   deadline=s.data?.deadline||null;isAdmin=!!a.data;render();
 }
 
+function board(f){const c={};games.filter(f).forEach(g=>{const o=c[g.user_id]||(c[g.user_id]={u:g.user_id,n:0,h:0,p:0});o.n++;o.h+=+g.hours;o.p+=pts(g)});return Object.values(c).sort((a,b)=>b.p-a.p||a.h-b.h)}
+function route(){const h=location.hash.replace(/^#\/?/,'').split('/');return{pg:['home','estante','perfil'].includes(h[0])?h[0]:'home',id:h[1]||me}}
+const tile=(l,v)=>`<div class="stat"><small>${l}</small><b>${v}</b></div>`;
 function render(){
-  const c={};
-  games.filter(counts).forEach(g=>{const o=c[g.user_id]||(c[g.user_id]={u:g.user_id,n:0,h:0,p:0});o.n++;o.h+=+g.hours;o.p+=pts(g)});
-  const arr=Object.values(c).sort((a,b)=>b.p-a.p||a.h-b.h);
-  const top=arr.slice(0,3),ord=top.length===3?[1,0,2]:top.length===2?[1,0]:[0];
-  $('pod').innerHTML=arr.length?`<div class="podium">${ord.map(i=>{const p=top[i];return `<div class="pd p${i+1}"><div class="crown">${i?'':'👑'}</div><div class="nm">${av(p.u,i?46:56)}<div>${esc(name(p.u))}</div></div><div class="blk"><b>${p.p}</b><span>pts · ${p.n} ${p.n===1?'jogo':'jogos'}</span><span>${Math.round(p.h*10)/10}h</span></div></div>`}).join('')}</div>${arr.length>3?`<p class="cap">Também jogando: ${arr.slice(3).map(p=>`${esc(name(p.u))} (${p.p} pts)`).join(', ')}</p>`:''}`:'<div class="empty">Nenhum jogo confirmado ainda. Registre um jogo e peça para um amigo confirmar o comprovante!</div>';
-  const ms=[...new Set(games.map(g=>g.end_date.slice(0,7)))].sort().reverse();
-  if(mo&&!ms.includes(mo))mo='';
-  $('mc').innerHTML=ms.length?`<button class="chip${mo?'':' on'}" data-m="">Geral</button>`+ms.map(m=>`<button class="chip${mo===m?' on':''}" data-m="${m}">${mlab(m)}</button>`).join(''):'';
-  const owners=[...new Set(games.map(g=>g.user_id))];
-  $('pc').innerHTML=owners.length?`<button class="chip${pf?'':' on'}" data-f="">Todos (${games.length})</button>`+owners.map(u=>`<button class="chip${pf===u?' on':''}" data-f="${u}">${esc(name(u))} (${games.filter(g=>g.user_id===u).length})</button>`).join(''):'';
-  const list=games.filter(g=>!pf||g.user_id===pf);
-  $('shelf').innerHTML=list.map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nada por aqui ainda.</div>';
+  if(!me)return;
+  const {pg,id}=route(),all=board(ok);
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.p===pg));
+  ['home','estante','perfil'].forEach(p=>$('pg-'+p).hidden=p!==pg);
   let h='';
   if(deadline){
     const left=Math.ceil((new Date(deadline+'T23:59:59')-new Date())/864e5);
-    h=left>=0?`<span class="dl">⏳ ${left===0?'Último dia!':`Faltam <b>${left}</b> ${left===1?'dia':'dias'}`} · encerra em ${fd(deadline)}</span>`:`<span class="dl end">🏁 Competição encerrada em ${fd(deadline)}${arr[0]&&!mo?` · Campeão: <b>${esc(name(arr[0].u))}</b> (${arr[0].p} pts)`:''}</span>`;
+    h=left>=0?`<span class="dl">⏳ ${left===0?'Último dia!':`Faltam <b>${left}</b> ${left===1?'dia':'dias'}`} · encerra em ${fd(deadline)}</span>`:`<span class="dl end">🏁 Competição encerrada em ${fd(deadline)}${all[0]?` · Campeão: <b>${esc(name(all[0].u))}</b> (${all[0].p} pts)`:''}</span>`;
   }
   if(isAdmin)h+=`<input type="date" id="dli" value="${deadline||''}"><button class="chip" data-a="dls">salvar prazo</button>${deadline?'<button class="chip" data-a="dlc">remover prazo</button>':''}`;
   $('dl').innerHTML=h;
-  $('me').innerHTML=profs[me]?`${av(me,36)} Jogando como <b>${esc(name(me))}</b> <button class="chip" data-a="nick">trocar apelido</button>`:'';
+  if(pg==='home')home(board(counts),all);else if(pg==='estante')estante();else perfil(id);
+}
+function home(arr,all){
+  const okg=games.filter(ok),hrs=okg.reduce((s,g)=>s+ +g.hours,0);
+  $('sum').innerHTML=tile('👑 Líder',all[0]?`${esc(name(all[0].u))} · ${all[0].p} pts`:'—')+tile('✅ Jogos confirmados',okg.length)+tile('⏱️ Horas jogadas',Math.round(hrs*10)/10+' h')+tile('🎮 Jogadores',Object.keys(profs).length);
+  const top=arr.slice(0,3),ord=top.length===3?[1,0,2]:top.length===2?[1,0]:[0];
+  $('pod').innerHTML=arr.length?`<div class="podium">${ord.map(i=>{const p=top[i];return `<div class="pd p${i+1}"><div class="crown">${i?'':'👑'}</div><div class="nm" data-a="prof" data-id="${p.u}" style="cursor:pointer">${av(p.u,i?46:56)}<div>${esc(name(p.u))}</div></div><div class="blk"><b>${p.p}</b><span>pts · ${p.n} ${p.n===1?'jogo':'jogos'}</span><span>${Math.round(p.h*10)/10}h</span></div></div>`}).join('')}</div>${arr.length>3?`<p class="cap">Também jogando: ${arr.slice(3).map(p=>`${esc(name(p.u))} (${p.p} pts)`).join(', ')}</p>`:''}`:'<div class="empty">Nenhum jogo confirmado ainda. Registre um jogo e peça para um amigo confirmar o comprovante!</div>';
+  const ms=[...new Set(games.map(g=>g.end_date.slice(0,7)))].sort().reverse();
+  if(mo&&!ms.includes(mo))mo='';
+  $('mc').innerHTML=ms.length?`<button class="chip${mo?'':' on'}" data-m="">Geral</button>`+ms.map(m=>`<button class="chip${mo===m?' on':''}" data-m="${m}">${mlab(m)}</button>`).join(''):'';
+  $('rec').innerHTML=games.slice(0,8).map(card).join('')||'<div class="empty">Nenhum jogo ainda.</div>';
+}
+function estante(){
+  const owners=[...new Set(games.map(g=>g.user_id))];
+  $('pc').innerHTML=owners.length?`<button class="chip${pf?'':' on'}" data-f="">Todos (${games.length})</button>`+owners.map(u=>`<button class="chip${pf===u?' on':''}" data-f="${u}">${esc(name(u))} (${games.filter(g=>g.user_id===u).length})</button>`).join(''):'';
+  $('shelf').innerHTML=games.filter(g=>!pf||g.user_id===pf).map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nada por aqui ainda.</div>';
+}
+function perfil(id){
+  const p=profs[id];
+  if(!p){$('pg-perfil').innerHTML='<div class="empty">Perfil não encontrado.</div>';return}
+  const own=id===me,mine=games.filter(g=>g.user_id===id),okm=mine.filter(ok),pt=okm.reduce((s,g)=>s+pts(g),0),hrs=okm.reduce((s,g)=>s+ +g.hours,0),rs=mine.filter(g=>g.rating!=null),avg=rs.length?Math.round(rs.reduce((s,g)=>s+ +g.rating,0)/rs.length*10)/10:'—';
+  $('pg-perfil').innerHTML=`<div class="card prof">${av(id,96)}<div><h2 style="margin:0">${esc(p.name)}</h2><div class="bs">${okm.length} ${okm.length===1?'jogo confirmado':'jogos confirmados'}</div>${own?`<div class="chips" style="margin:10px 0 0"><label class="chip" style="cursor:pointer">📷 Trocar foto<input type="file" id="avf" accept="image/*" hidden></label><button class="chip" data-a="nick">✏️ Trocar apelido</button>${gAvatar?'<button class="chip" data-a="gphoto">↩ Usar foto do Google</button>':''}</div>`:''}</div></div>
+  <div class="stats">${tile('⭐ Pontos',pt)}${tile('✅ Confirmados',okm.length)}${tile('📝 Registrados',mine.length)}${tile('⏱️ Horas totais',Math.round(hrs*10)/10+' h')}${tile('🎯 Nota média',avg)}</div>
+  <h2 class="sec"><i>🎮</i><span>${own?'Meus jogos':'Jogos de '+esc(p.name)}<small>pontos e comprovantes</small></span></h2>
+  <div class="shelf">${mine.map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nenhum jogo registrado.</div>'}</div>`;
 }
 
 function card(g){
   const own=g.user_id===me,n=nconf(g);
   const meta=[`${g.hours}h`,`${fd(g.start_date)} → ${fd(g.end_date)}`,`${Math.round(g.hours/days(g)*10)/10} h/dia`,g.platinum?'🏅 platina':'',g.rating!=null?`⭐ ${g.rating}`:'',`${pts(g)} pts`,n>=CFG.confirms?'✅ confirmado':'⏳ aguardando confirmação'].filter(Boolean).join(' · ');
   const ini=g.title.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
-  return `<div class="g">${g.cover_url?`<div class="cv" style="background-image:url('${esc(g.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(g.title)}">${esc(ini)}</div>`}${g.platform?`<span class="pfb">${esc(g.platform)}</span>`:''}<div class="cap"><b>${esc(g.title)}</b><span class="by">${av(g.user_id,18)}${esc(name(g.user_id))}</span><br>${esc(meta)}${g.comment?`<div class="cm">“${esc(g.comment)}”</div>`:''}<button class="pf" data-a="proof" data-id="${g.id}">🧾 Ver comprovante</button></div>${own?`<button class="del" style="right:38px" data-a="edit" data-id="${g.id}" title="Editar">✎</button><button class="del" data-a="del" data-id="${g.id}" title="Remover">✕</button>`:''}</div>`;
+  return `<div class="g">${g.cover_url?`<div class="cv" style="background-image:url('${esc(g.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(g.title)}">${esc(ini)}</div>`}${g.platform?`<span class="pfb">${esc(g.platform)}</span>`:''}<div class="cap"><b>${esc(g.title)}</b><span class="by" data-a="prof" data-id="${g.user_id}">${av(g.user_id,18)}${esc(name(g.user_id))}</span><br>${esc(meta)}${g.comment?`<div class="cm">“${esc(g.comment)}”</div>`:''}<button class="pf" data-a="proof" data-id="${g.id}">🧾 Ver comprovante</button></div>${own?`<button class="del" style="right:38px" data-a="edit" data-id="${g.id}" title="Editar">✎</button><button class="del" data-a="del" data-id="${g.id}" title="Remover">✕</button>`:''}</div>`;
 }
 
 function shrink(file,mw){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=Math.min(mw,im.width),h=Math.round(im.height*w/im.width);if(h>mw*1.5){h=Math.round(mw*1.5);w=Math.round(im.width*h/im.height)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};im.onerror=rej;im.src=u})}
-async function up(file,mw){const b=await shrink(file,mw),path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
+async function upBlob(b){const path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
+async function up(file,mw){return upBlob(await shrink(file,mw))}
+function square(file,n){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const m=Math.min(im.width,im.height),cv=document.createElement('canvas');cv.width=n;cv.height=n;cv.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,n,n);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.85)};im.onerror=rej;im.src=u})}
+function rmOld(u){const m=(u||'').match(/\/imagens\/(.+)$/);if(m)sb.storage.from('imagens').remove([decodeURIComponent(m[1])])}
+async function setAvatar(url){const old=profs[me]?.avatar_url;const r=await sb.from('profiles').update({avatar_url:url}).eq('id',me);if(r.error)throw r.error;rmOld(old);await load()}
 
 function readForm(){return{title:$('t').value.trim(),hours:parseFloat($('hr').value)||0,start_date:$('ds').value,end_date:$('dt').value,difficulty:parseFloat($('df').value)||0,platinum:$('pl100').checked,platform:$('pf2').value||null,rating:$('nt').value===''?null:Math.min(10,Math.max(0,+$('nt').value)),comment:$('cm').value.trim()||null}}
 function pv(){const g=readForm();const e=g.start_date&&g.end_date&&g.hours>0?dateErr(g):'';$('pv').textContent=e||(g.hours>0&&g.difficulty&&g.start_date&&g.end_date?`Este jogo vale ${pts(g)} pontos.`:'')}
@@ -228,6 +267,8 @@ document.addEventListener('click',async e=>{
   const a=t.dataset.a,id=t.dataset.id,g=games.find(x=>x.id===id);
   if(a==='add')openForm();
   else if(a==='close')closeAll();
+  else if(a==='prof'){location.hash='#/perfil/'+id}
+  else if(a==='gphoto'){try{await setAvatar(gAvatar);say('Foto do Google restaurada.')}catch(err){say('Não foi possível trocar a foto.')}}
   else if(a==='edit')openForm(id);
   else if(a==='out'){await sb.auth.signOut()}
   else if(a==='del'){if(confirm('Remover este jogo?')){const r=await sb.from('games').delete().eq('id',id);if(r.error)say('Não foi possível remover.');else load()}}
@@ -241,13 +282,18 @@ document.addEventListener('click',async e=>{
   else if(a==='conf'&&g){const r=await sb.from('confirmations').upsert({game_id:g.id,user_id:me,rev:g.rev},{onConflict:'game_id,user_id'});if(r.error)say('Não foi possível confirmar.');else{closeAll();say('Comprovante confirmado!');load()}}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+window.addEventListener('hashchange',()=>{closeAll();render();window.scrollTo(0,0)});
+document.addEventListener('change',async e=>{
+  if(e.target.id!=='avf')return;const f=e.target.files[0];if(!f)return;
+  try{await setAvatar(await upBlob(await square(f,240)));say('Foto atualizada!')}catch(err){say('Não foi possível enviar a foto.')}
+});
 
 $('gl').onclick=()=>sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname}});
 
 async function boot(s){
   if(!s){me=null;$('app').hidden=true;$('login').hidden=false;return}
   if(me===s.user.id)return;
-  me=s.user.id;$('login').hidden=true;$('app').hidden=false;
+  me=s.user.id;$('login').hidden=true;$('app').hidden=false;{const m0=s.user.user_metadata||{};gAvatar=m0.avatar_url||m0.picture||null}
   await load();
   if(!profs[me]){
     const m=s.user.user_metadata||{},n=((m.name||m.full_name||'Jogador').split(' ')[0]).slice(0,24);
