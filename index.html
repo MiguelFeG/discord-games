@@ -73,6 +73,21 @@ label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px
 .recent{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px}.recent .g{flex:0 0 150px}
 .prof{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px}
 .av,.by{cursor:pointer}
+textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;resize:vertical;min-height:140px}
+#dp{position:fixed;inset:0;background:rgba(5,6,12,.8);display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto;z-index:35}
+#dp[hidden]{display:none}
+.dcard{width:100%;max-width:640px;margin:3vh 0;position:relative}
+.dcard .x{position:absolute;top:12px;right:12px;width:32px;height:32px;padding:0;background:var(--bd);border-radius:50%}
+.dhead{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px;padding-right:36px}
+.dcv{width:150px;flex:none;aspect-ratio:2/3;border-radius:12px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:800;color:rgba(255,255,255,.9)}
+.dhead h3{margin:0 0 8px;font-size:24px;line-height:1.2;overflow-wrap:anywhere}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.tag{padding:3px 10px;border-radius:999px;background:var(--bd);font-size:12px}
+.dstats{grid-template-columns:repeat(auto-fit,minmax(105px,1fr));margin-bottom:6px}
+.dcard h4{margin:18px 0 8px;color:var(--mut);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.rv{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}
+.dpf{width:100%;max-height:280px;object-fit:contain;background:var(--bg);border-radius:10px;cursor:zoom-in}
+.dact{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;color:var(--mut);font-size:14px}
+@media(max-width:480px){.dhead{flex-direction:column}.dcv{width:120px}}
 </style>
 </head>
 <body>
@@ -116,7 +131,7 @@ label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px
     <label class="h">Dificuldade<select id="df"><option value="">Selecione…</option><option value="1">Fácil</option><option value="1.25">Médio</option><option value="1.5">Difícil</option><option value="2">Muito difícil</option></select></label>
     <label class="h">Plataforma<select id="pf2"><option value="">Selecione…</option><option>PC</option><option>PlayStation</option><option>Xbox</option><option>Nintendo</option><option>Celular</option><option>Outro</option></select></label>
     <label class="h">Nota (0 a 10)<input type="number" id="nt" min="0" max="10" step="0.5" placeholder="opcional"></label>
-    <input id="cm" maxlength="120" placeholder="Comentário curto (opcional)">
+    <label class="h" style="grid-column:1/-1">Review (opcional)<textarea id="cm" maxlength="6000" rows="7" placeholder="Escreva sua review completa: história, jogabilidade, dificuldade, o que achou…"></textarea><span id="cc" style="text-align:right"></span></label>
     <label class="plat"><input type="checkbox" id="pl100"><span>🏅 Platina / 100% <small style="color:var(--mut)">(bônus ×1,5)</small></span></label>
     <button id="b">Adicionar</button>
     <div id="pv"></div>
@@ -124,6 +139,7 @@ label.plat{display:flex;gap:10px;align-items:center;padding:11px 12px;border:1px
   </form>
 </div></div>
 <div id="lb" hidden></div>
+<div id="dp" hidden></div>
 <p id="st" role="status"></p>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -216,9 +232,25 @@ function card(g){
   const own=g.user_id===me,n=nconf(g);
   const meta=[`${g.hours}h`,`${fd(g.start_date)} → ${fd(g.end_date)}`,`${Math.round(g.hours/days(g)*10)/10} h/dia`,g.platinum?'🏅 platina':'',g.rating!=null?`⭐ ${g.rating}`:'',`${pts(g)} pts`,n>=CFG.confirms?'✅ confirmado':'⏳ aguardando confirmação'].filter(Boolean).join(' · ');
   const ini=g.title.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
-  return `<div class="g">${g.cover_url?`<div class="cv" style="background-image:url('${esc(g.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(g.title)}">${esc(ini)}</div>`}${g.platform?`<span class="pfb">${esc(g.platform)}</span>`:''}<div class="cap"><b>${esc(g.title)}</b><span class="by" data-a="prof" data-id="${g.user_id}">${av(g.user_id,18)}${esc(name(g.user_id))}</span><br>${esc(meta)}${g.comment?`<div class="cm">“${esc(g.comment)}”</div>`:''}<button class="pf" data-a="proof" data-id="${g.id}">🧾 Ver comprovante</button></div>${own?`<button class="del" style="right:38px" data-a="edit" data-id="${g.id}" title="Editar">✎</button><button class="del" data-a="del" data-id="${g.id}" title="Remover">✕</button>`:''}</div>`;
+  return `<div class="g" data-a="det" data-id="${g.id}" style="cursor:pointer">${g.cover_url?`<div class="cv" style="background-image:url('${esc(g.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(g.title)}">${esc(ini)}</div>`}${g.platform?`<span class="pfb">${esc(g.platform)}</span>`:''}<div class="cap"><b>${esc(g.title)}</b><span class="by" data-a="prof" data-id="${g.user_id}">${av(g.user_id,18)}${esc(name(g.user_id))}</span><br>${esc(meta)}${g.comment?`<div class="cm">“${esc(g.comment)}”</div>`:''}</div>${own?`<button class="del" style="right:38px" data-a="edit" data-id="${g.id}" title="Editar">✎</button><button class="del" data-a="del" data-id="${g.id}" title="Remover">✕</button>`:''}</div>`;
 }
 
+const DIF={1:'Fácil',1.25:'Médio',1.5:'Difícil',2:'Muito difícil'};
+function det(id){
+  const g=games.find(x=>x.id===id);if(!g)return;
+  const n=nconf(g),own=g.user_id===me,ini=g.title.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const mine=confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev);
+  const row=(l,v)=>`<div class="stat"><small>${l}</small><b>${v}</b></div>`;
+  $('dp').innerHTML=`<div class="card dcard"><button class="x" data-a="closedp" aria-label="Fechar">✕</button>
+  <div class="dhead">${g.cover_url?`<div class="dcv" style="background-image:url('${esc(g.cover_url)}')"></div>`:`<div class="dcv" style="background:${grad(g.title)}">${esc(ini)}</div>`}
+  <div><h3>${esc(g.title)}</h3><div class="by" data-a="prof" data-id="${g.user_id}">${av(g.user_id,22)}${esc(name(g.user_id))}</div>
+  <div class="tags">${g.platform?`<span class="tag">${esc(g.platform)}</span>`:''}${g.platinum?'<span class="tag">🏅 Platina</span>':''}<span class="tag">${n>=CFG.confirms?'✅ Confirmado':'⏳ Aguardando confirmação'}</span></div></div></div>
+  <div class="stats dstats">${row('Pontos',pts(g))}${row('Horas',g.hours+' h')}${row('Início',fd(g.start_date))}${row('Fim',fd(g.end_date))}${row('Média',Math.round(g.hours/days(g)*10)/10+' h/dia')}${row('Dificuldade',DIF[g.difficulty]||g.difficulty)}${row('Nota',g.rating!=null?'⭐ '+g.rating:'—')}</div>
+  <h4>Review</h4><div class="rv">${g.comment?esc(g.comment):'<span style="color:var(--mut)">Sem review ainda.</span>'}</div>
+  <h4>Comprovante</h4><img class="dpf" src="${esc(g.proof_url)}" alt="Comprovante" data-a="proof" data-id="${g.id}">
+  <div class="dact"><span>${n} ${n===1?'confirmação':'confirmações'}</span>${!own?(mine?'<span>✅ Você já confirmou</span>':`<button data-a="conf" data-id="${g.id}">✅ Confirmar comprovante</button>`):`<button class="ghost" data-a="edit" data-id="${g.id}">✎ Editar</button><button class="ghost" data-a="del" data-id="${g.id}">✕ Remover</button>`}</div></div>`;
+  $('dp').hidden=false;
+}
 function shrink(file,mw){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=Math.min(mw,im.width),h=Math.round(im.height*w/im.width);if(h>mw*1.5){h=Math.round(mw*1.5);w=Math.round(im.width*h/im.height)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};im.onerror=rej;im.src=u})}
 async function upBlob(b){const path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
 async function up(file,mw){return upBlob(await shrink(file,mw))}
@@ -227,8 +259,9 @@ function rmOld(u){const m=(u||'').match(/\/imagens\/(.+)$/);if(m)sb.storage.from
 async function setAvatar(url){const old=profs[me]?.avatar_url;const r=await sb.from('profiles').update({avatar_url:url}).eq('id',me);if(r.error)throw r.error;rmOld(old);await load()}
 
 function readForm(){return{title:$('t').value.trim(),hours:parseFloat($('hr').value)||0,start_date:$('ds').value,end_date:$('dt').value,difficulty:parseFloat($('df').value)||0,platinum:$('pl100').checked,platform:$('pf2').value||null,rating:$('nt').value===''?null:Math.min(10,Math.max(0,+$('nt').value)),comment:$('cm').value.trim()||null}}
-function pv(){const g=readForm();const e=g.start_date&&g.end_date&&g.hours>0?dateErr(g):'';$('pv').textContent=e||(g.hours>0&&g.difficulty&&g.start_date&&g.end_date?`Este jogo vale ${pts(g)} pontos.`:'')}
-['hr','df','pl100','ds','dt'].forEach(i=>{$(i).addEventListener('input',pv);$(i).addEventListener('change',pv)});
+function cnt(){$('cc').textContent=$('cm').value.length+' / 6000'}
+function pv(){cnt();const g=readForm();const e=g.start_date&&g.end_date&&g.hours>0?dateErr(g):'';$('pv').textContent=e||(g.hours>0&&g.difficulty&&g.start_date&&g.end_date?`Este jogo vale ${pts(g)} pontos.`:'')}
+['hr','df','pl100','ds','dt','cm'].forEach(i=>{$(i).addEventListener('input',pv);$(i).addEventListener('change',pv)});
 $('prf').onchange=e=>{$('pl').firstChild.nodeValue=e.target.files[0]?'🧾 '+e.target.files[0].name:'🧾 Comprovante *'};
 $('img').onchange=e=>{$('fl').firstChild.nodeValue=e.target.files[0]?'📷 '+e.target.files[0].name:'📷 Capa (opcional)'};
 
@@ -240,7 +273,7 @@ function openForm(id){
   $('mt').textContent=g?'Editar jogo':'Registrar jogo zerado';$('b').textContent=g?'Salvar alterações':'Adicionar';
   $('ov').hidden=false;document.body.style.overflow='hidden';pv();
 }
-function closeAll(){$('ov').hidden=true;$('lb').hidden=true;document.body.style.overflow='';editing=null}
+function closeAll(){$('ov').hidden=true;$('lb').hidden=true;$('dp').hidden=true;document.body.style.overflow='';editing=null}
 
 $('f').onsubmit=async e=>{
   e.preventDefault();const btn=$('b');btn.disabled=true;
@@ -260,28 +293,32 @@ $('f').onsubmit=async e=>{
 
 document.addEventListener('click',async e=>{
   const t=e.target.closest('[data-a],[data-m],[data-f]');
-  if(e.target.id==='lb'){closeAll();return}
+  if(e.target.id==='lb'){$('lb').hidden=true;return}
+  if(e.target.id==='dp'){$('dp').hidden=true;return}
   if(!t)return;
   if(t.hasAttribute('data-m')){mo=t.dataset.m;render();return}
   if(t.hasAttribute('data-f')){pf=t.dataset.f;render();return}
   const a=t.dataset.a,id=t.dataset.id,g=games.find(x=>x.id===id);
   if(a==='add')openForm();
   else if(a==='close')closeAll();
+  else if(a==='det')det(id);
+  else if(a==='closedp')$('dp').hidden=true;
+  else if(a==='closelb')$('lb').hidden=true;
   else if(a==='prof'){location.hash='#/perfil/'+id}
   else if(a==='gphoto'){try{await setAvatar(gAvatar);say('Foto do Google restaurada.')}catch(err){say('Não foi possível trocar a foto.')}}
   else if(a==='edit')openForm(id);
   else if(a==='out'){await sb.auth.signOut()}
-  else if(a==='del'){if(confirm('Remover este jogo?')){const r=await sb.from('games').delete().eq('id',id);if(r.error)say('Não foi possível remover.');else load()}}
+  else if(a==='del'){if(confirm('Remover este jogo?')){const r=await sb.from('games').delete().eq('id',id);if(r.error)say('Não foi possível remover.');else{closeAll();load()}}}
   else if(a==='nick'){const n=(prompt('Novo apelido:',name(me))||'').trim().slice(0,24);if(n){const r=await sb.from('profiles').update({name:n}).eq('id',me);if(r.error)say('Não foi possível salvar o apelido.');else load()}}
   else if(a==='dls'||a==='dlc'){const r=await sb.from('settings').update({deadline:a==='dls'?($('dli').value||null):null}).eq('id',1);if(r.error)say('Só o administrador pode definir o prazo.');else load()}
   else if(a==='proof'&&g){
     const nc=nconf(g);let ex='';
     if(g.user_id!==me)ex=confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev)?'<div>✅ Você já confirmou este comprovante</div>':`<button data-a="conf" data-id="${g.id}">✅ Confirmar comprovante</button>`;
-    $('lb').innerHTML=`<div class="lbc"><img src="${esc(g.proof_url)}" alt="Comprovante"><div>${nc} ${nc===1?'confirmação':'confirmações'}</div>${ex}<button class="ghost" data-a="close">Fechar</button></div>`;$('lb').hidden=false;
+    $('lb').innerHTML=`<div class="lbc"><img src="${esc(g.proof_url)}" alt="Comprovante"><div>${nc} ${nc===1?'confirmação':'confirmações'}</div>${ex}<button class="ghost" data-a="closelb">Fechar</button></div>`;$('lb').hidden=false;
   }
   else if(a==='conf'&&g){const r=await sb.from('confirmations').upsert({game_id:g.id,user_id:me,rev:g.rev},{onConflict:'game_id,user_id'});if(r.error)say('Não foi possível confirmar.');else{closeAll();say('Comprovante confirmado!');load()}}
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!$('lb').hidden)$('lb').hidden=true;else closeAll()}});
 window.addEventListener('hashchange',()=>{closeAll();render();window.scrollTo(0,0)});
 document.addEventListener('change',async e=>{
   if(e.target.id!=='avf')return;const f=e.target.files[0];if(!f)return;
