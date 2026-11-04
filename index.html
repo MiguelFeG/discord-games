@@ -204,6 +204,21 @@ button.sm{padding:4px 9px;font-size:12px}
 .nic img{filter:invert(1)}
 .nlab{display:flex;align-items:center;gap:8px}
 .sech{display:flex;align-items:center;gap:12px}.sech h2{flex:1}
+/* desafios, quero jogar e compartilhar */
+.ch{margin-bottom:12px}
+.chh{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.chh b{font-size:16px}
+.chp{height:8px;background:var(--bd);border-radius:8px;overflow:hidden;margin:10px 0 4px}
+.chp i{display:block;height:100%;background:linear-gradient(90deg,#5865f2,#b44bff)}
+.avs{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+details.ch summary{cursor:pointer;color:var(--mut)}
+#chf{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}#chf>*{grid-column:1/-1}
+#chf select,#chf #cn,#chf #cb{grid-column:auto}
+.wf{display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:16px;align-items:center}
+.wf>*{grid-column:auto}.wf .file{margin:0}
+.wishc.top{box-shadow:0 0 0 2px var(--gold),0 0 26px rgba(255,200,61,.4)}
+.topb{position:absolute;top:32px;left:6px;background:var(--gold);color:#1a1530;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.vtb{width:100%;margin-top:auto}
+@media(max-width:560px){.wf{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -222,17 +237,19 @@ button.sm{padding:4px 9px;font-size:12px}
     <div><div class="bn">DISCORD <span>GAMES</span></div><div class="bs">Placar de zeradas · quem zerou mais?</div></div></div>
     <div class="acts"><button data-a="add">➕ Registrar jogo</button><button class="ghost" data-a="out">Sair</button></div>
   </header>
-  <nav id="nav"><a href="#/home" data-p="home">Home</a><a href="#/estante" data-p="estante">Estante</a><a href="#/rankings" data-p="rankings">Rankings</a><a href="#/aguardando" data-p="aguardando">Aguardando <span id="pcnt"></span></a><a href="#/perfil" data-p="perfil">Perfil</a></nav>
+  <nav id="nav"><a href="#/home" data-p="home">Home</a><a href="#/estante" data-p="estante">Estante</a><a href="#/quero" data-p="quero">Quero jogar</a><a href="#/rankings" data-p="rankings">Rankings</a><a href="#/aguardando" data-p="aguardando">Aguardando <span id="pcnt"></span></a><a href="#/perfil" data-p="perfil">Perfil</a></nav>
   <div id="dl"></div>
   <div id="pg-home">
     <div class="card cta"><div><b>Zerou um jogo?</b><div class="bs">Registre com comprovante e peça para um amigo confirmar.</div></div><button data-a="add">➕ Registrar jogo</button></div>
     <h2 class="sec"><span>Resumo<small>a competição em números</small></span></h2><div class="stats" id="sum"></div>
+    <h2 class="sec"><span>Desafios do mês<small>bônus em pontos para quem cumprir</small></span></h2><div id="chl"></div>
     <h2 class="sec"><span>Pódio<small>ranking por pontos</small></span></h2><div class="chips" id="mc"></div><div class="card" id="pod"></div>
     <h2 class="sec"><span>Últimos zerados<small>o que saiu do forno</small></span></h2><div class="marq" id="rec"></div>
   </div>
   <div id="pg-estante" hidden>
     <h2 class="sec"><span>Estante<small>toda a coleção da galera</small></span></h2><div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
   </div>
+  <div id="pg-quero" hidden></div>
   <div id="pg-rankings" hidden></div>
   <div id="pg-aguardando" hidden></div>
   <div id="pg-perfil" hidden></div>
@@ -285,7 +302,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 const days=g=>Math.round((new Date(g.end_date+'T00:00')-new Date(g.start_date+'T00:00'))/864e5)+1;
 const fd=s=>s?s.split('-').reverse().join('/'):'';
 const fdt=s=>s?new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-let podSig='',lastLead=null,cmts=[],reacts=[];
+let podSig='',lastLead=null,cmts=[],reacts=[],wishes=[],wvotes=[],chals=[];
 const name=u=>profs[u]?.name||'Jogador';
 const hue=s=>[...String(s)].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,0);
 const grad=s=>{const h=hue(s);return `linear-gradient(145deg,hsl(${h} 70% 48%),hsl(${(h+55)%360} 70% 28%))`};
@@ -307,26 +324,27 @@ function dateErr(g){
 
 // Carregamento dos dados do Supabase
 async function load(){
-  const [g,p,c,s,a,cm,rx]=await Promise.all([
+  const [g,p,c,s,a,cm,rx,wl,wv,ch]=await Promise.all([
     sb.from('games').select('*').order('end_date',{ascending:false}),
     sb.from('profiles').select('*'),sb.from('confirmations').select('*'),
     sb.from('settings').select('deadline').eq('id',1).maybeSingle(),
     sb.from('admins').select('user_id').maybeSingle(),
-    sb.from('comments').select('*').order('created_at'),sb.from('reactions').select('*')]);
+    sb.from('comments').select('*').order('created_at'),sb.from('reactions').select('*'),
+    sb.from('wishlist').select('*').order('created_at',{ascending:false}),sb.from('wish_votes').select('*'),sb.from('challenges').select('*').order('month',{ascending:false})]);
   if(g.error){say('Erro ao carregar os dados: '+g.error.message);return}
-  games=g.data||[];profs=Object.fromEntries((p.data||[]).map(x=>[x.id,x]));confs=c.data||[];cmts=cm.data||[];reacts=rx.data||[];
+  games=g.data||[];profs=Object.fromEntries((p.data||[]).map(x=>[x.id,x]));confs=c.data||[];cmts=cm.data||[];reacts=rx.data||[];wishes=wl.data||[];wvotes=wv.data||[];chals=ch.data||[];
   deadline=s.data?.deadline||null;isAdmin=!!a.data;render();
 }
 
 // Telas: Home, Estante, Perfil, cards e pop-up do jogo
-function board(f){const by={};games.filter(f).forEach(g=>(by[g.user_id]||(by[g.user_id]=[])).push(g));return Object.entries(by).map(([u,l])=>({u,n:l.filter(g=>g.kind!=='milestone').length,h:l.reduce((s,g)=>s+ +g.hours,0),p:sumPts(l)})).sort((a,b)=>b.p-a.p||a.h-b.h)}
-function route(){const h=location.hash.replace(/^#\/?/,'').split('/');return{pg:['home','estante','rankings','aguardando','perfil'].includes(h[0])?h[0]:'home',id:h[1]||me}}
+function board(f,m){const by={};games.filter(f).forEach(g=>(by[g.user_id]||(by[g.user_id]=[])).push(g));return Object.entries(by).map(([u,l])=>({u,n:l.filter(g=>g.kind!=='milestone').length,h:l.reduce((s,g)=>s+ +g.hours,0),p:sumPts(l)+bonus(u,m||'')})).sort((a,b)=>b.p-a.p||a.h-b.h)}
+function route(){const h=location.hash.replace(/^#\/?/,'').split('/');return{pg:['home','estante','quero','rankings','aguardando','perfil'].includes(h[0])?h[0]:'home',id:h[1]||me}}
 const tile=(l,v)=>`<div class="stat"><small>${l}</small><b>${v}</b></div>`;
 function render(){
   if(!me)return;
   const {pg,id}=route(),all=board(ok);
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.p===pg));
-  ['home','estante','rankings','aguardando','perfil'].forEach(p=>$('pg-'+p).hidden=p!==pg);
+  ['home','estante','quero','rankings','aguardando','perfil'].forEach(p=>$('pg-'+p).hidden=p!==pg);
   let h='';
   if(deadline){
     const left=Math.ceil((new Date(deadline+'T23:59:59')-new Date())/864e5);
@@ -335,15 +353,15 @@ function render(){
   if(isAdmin)h+=`<input type="date" id="dli" value="${deadline||''}"><button class="chip" data-a="dls">salvar prazo</button>${deadline?'<button class="chip" data-a="dlc">remover prazo</button>':''}`;
   $('dl').innerHTML=h;
   {const n=games.filter(g=>g.user_id!==me&&nconf(g)<CFG.confirms&&!confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev)).length;$('pcnt').textContent=n?`(${n})`:''}
-  if(pg==='home')home(board(counts),all);else if(pg==='estante')estante();else if(pg==='rankings')rankings();else if(pg==='aguardando')aguardando();else perfil(id);
+  if(pg==='home')home(board(counts,mo),all);else if(pg==='estante')estante();else if(pg==='quero')quero();else if(pg==='rankings')rankings();else if(pg==='aguardando')aguardando();else perfil(id);
 }
-function home(arr,all){
+function home(arr,all){chRender();
   const okg=games.filter(ok),hrs=okg.reduce((s,g)=>s+ +g.hours,0);
   $('sum').innerHTML=tile('👑 Líder',all[0]?`${esc(name(all[0].u))} · ${all[0].p} pts`:'—')+tile('✅ Jogos confirmados',okg.length)+tile('⏱️ Horas jogadas',Math.round(hrs*10)/10+' h')+tile('🎮 Jogadores',Object.keys(profs).length);
   const sig=arr.slice(0,3).map(p=>p.u+':'+p.p).join('|'),anim=sig!==podSig;podSig=sig;
   
   const top=arr.slice(0,3),ord=top.length===3?[1,0,2]:top.length===2?[1,0]:[0];
-  $('pod').innerHTML=arr.length?`<div class="podium${anim?' anim':''}">${ord.map(i=>{const p=top[i];return `<div class="pd p${i+1}"><div class="crown">${i?'':'👑'}</div><div class="nm" data-a="prof" data-id="${p.u}" style="cursor:pointer">${av(p.u,i?46:56)}<div>${esc(name(p.u))} ${topBadge(p.u)}</div></div><div class="blk"><b>${p.p}</b><span>pts · ${p.n} ${p.n===1?'jogo':'jogos'}</span><span>${Math.round(p.h*10)/10}h</span></div></div>`}).join('')}</div>${arr.length>3?`<p class="cap">Também jogando: ${arr.slice(3).map(p=>`${esc(name(p.u))} (${p.p} pts)`).join(', ')}</p>`:''}`:'<div class="empty">Nenhum jogo confirmado ainda. Registre um jogo e peça para um amigo confirmar o comprovante!</div>';
+  $('pod').innerHTML=arr.length?`<div class="podium${anim?' anim':''}">${ord.map(i=>{const p=top[i];return `<div class="pd p${i+1}"><div class="crown">${i?'':'👑'}</div><div class="nm" data-a="prof" data-id="${p.u}" style="cursor:pointer">${av(p.u,i?46:56)}<div>${esc(name(p.u))} ${topBadge(p.u)}</div></div><div class="blk"><b>${p.p}</b><span>pts · ${p.n} ${p.n===1?'jogo':'jogos'}</span><span>${Math.round(p.h*10)/10}h</span></div></div>`}).join('')}</div><div class="bact" style="justify-content:center"><button class="chip" data-a="shcopy">Copiar imagem do pódio</button><button class="chip" data-a="shdl">Baixar PNG</button></div>${arr.length>3?`<p class="cap">Também jogando: ${arr.slice(3).map(p=>`${esc(name(p.u))} (${p.p} pts)`).join(', ')}</p>`:''}`:'<div class="empty">Nenhum jogo confirmado ainda. Registre um jogo e peça para um amigo confirmar o comprovante!</div>';
   const ms=[...new Set(games.map(g=>g.end_date.slice(0,7)))].sort().reverse();
   if(mo&&!ms.includes(mo))mo='';
   $('mc').innerHTML=ms.length?`<button class="chip${mo?'':' on'}" data-m="">Geral</button>`+ms.map(m=>`<button class="chip${mo===m?' on':''}" data-m="${m}">${mlab(m)}</button>`).join(''):'';
@@ -358,7 +376,7 @@ function estante(){
 function perfil(id){
   const p=profs[id];
   if(!p){$('pg-perfil').innerHTML='<div class="empty">Perfil não encontrado.</div>';return}
-  const own=id===me,mine=games.filter(g=>g.user_id===id),okm=mine.filter(ok),pt=sumPts(okm),hrs=okm.reduce((s,g)=>s+ +g.hours,0),rs=mine.filter(g=>g.rating!=null),avg=rs.length?Math.round(rs.reduce((s,g)=>s+ +g.rating,0)/rs.length*10)/10:'—';
+  const own=id===me,mine=games.filter(g=>g.user_id===id),okm=mine.filter(ok),pt=sumPts(okm)+bonus(id,''),hrs=okm.reduce((s,g)=>s+ +g.hours,0),rs=mine.filter(g=>g.rating!=null),avg=rs.length?Math.round(rs.reduce((s,g)=>s+ +g.rating,0)/rs.length*10)/10:'—';
   $('pg-perfil').innerHTML=`<div class="card prof">${av(id,96)}<div><h2 style="margin:0">${esc(p.name)} ${topBadge(id)}</h2><div class="bs">${okm.length} ${okm.length===1?'jogo confirmado':'jogos confirmados'}</div>${own?`<div class="chips" style="margin:10px 0 0"><label class="chip" style="cursor:pointer">📷 Trocar foto<input type="file" id="avf" accept="image/*" hidden></label><button class="chip" data-a="nick">✏️ Trocar apelido</button>${gAvatar?'<button class="chip" data-a="gphoto">↩ Usar foto do Google</button>':''}</div>`:''}</div></div>
   ${bioHtml(p,own)}${badgesHtml(id)}<div class="stats">${tile('⭐ Pontos',pt)}${tile('✅ Confirmados',okm.length)}${tile('📝 Registrados',mine.length)}${tile('⏱️ Horas totais',Math.round(hrs*10)/10+' h')}${tile('🎯 Nota média',avg)}</div>
   <h2 class="sec"><span>${own?'Meus jogos':'Jogos de '+esc(p.name)}<small>pontos e comprovantes</small></span></h2>
@@ -477,6 +495,93 @@ function aguardando(){
   $('pg-aguardando').innerHTML=sec('✅','Para eu confirmar','jogos dos amigos esperando você',forMe,'Nada para confirmar agora. 🎉')+sec('⏳','Os meus aguardando','esperando a aprovação de um amigo',mine,'Nenhum jogo seu aguardando.');
 }
 
+// Desafios mensais: jogo do mês e metas (os bônus entram nos pontos do ranking)
+const normT=s=>String(s||'').trim().toLowerCase();
+const chGames=(c,u)=>games.filter(g=>g.user_id===u&&g.kind!=='milestone'&&ok(g)&&g.end_date.slice(0,7)===c.month);
+const chProg=(c,u)=>chGames(c,u).length;
+const chDone=(c,u)=>c.kind==='game'?chGames(c,u).some(g=>normT(g.title)===normT(c.game_title)):chProg(c,u)>=(c.goal_games||0);
+const bonus=(u,m)=>chals.filter(c=>(!m||c.month===m)&&chDone(c,u)).reduce((s,c)=>s+c.bonus,0);
+function chRender(){
+  const cm=today().slice(0,7),[y,mm]=cm.split('-').map(Number),left=Math.ceil((new Date(y,mm,1)-new Date())/864e5);
+  const card=c=>{
+    const done=Object.keys(profs).filter(u=>chDone(c,u));
+    const body=c.kind==='game'
+      ?`<div class="bs">Zere <b>${esc(c.game_title)}</b> neste mês e envie o comprovante.</div>`
+      :`<div class="bs">Zere <b>${c.goal_games}</b> jogos neste mês.</div><div class="chp"><i style="width:${Math.min(100,Math.round(chProg(c,me)/c.goal_games*100))}%"></i></div><small>Você: ${chProg(c,me)}/${c.goal_games}</small>`;
+    return `<div class="card ch"><div class="chh"><b>${esc(c.title)}</b><span class="tag">${c.kind==='game'?'Jogo do mês':'Meta do mês'}</span><span class="tag">+${c.bonus} pts</span>${chDone(c,me)?'<span class="tag">Cumprido</span>':''}${isAdmin?`<button class="ghost sm" data-a="chdel" data-id="${c.id}">Apagar</button>`:''}</div>${body}<div class="avs">${done.map(u=>`<span data-a="prof" data-id="${u}" title="${esc(name(u))}">${av(u,28)}</span>`).join('')||'<small style="color:var(--mut)">Ninguém cumpriu ainda.</small>'}</div></div>`;
+  };
+  const adm=isAdmin?`<details class="card ch"><summary>Criar desafio</summary><form id="chf"><select id="ck"><option value="game">Jogo do mês</option><option value="goal">Meta do mês</option></select><input id="ct" maxlength="60" placeholder="Título do desafio"><input id="cg" maxlength="80" placeholder="Jogo a zerar (para Jogo do mês)"><input id="cn" type="number" min="1" max="30" placeholder="Meta de jogos (para Meta do mês)"><input id="cmo" type="month" value="${cm}"><input id="cb" type="number" min="1" max="500" placeholder="Bônus em pontos"><button>Criar desafio</button></form></details>`:'';
+  $('chl').innerHTML=(chals.filter(c=>c.month===cm).map(card).join('')||'<div class="empty">Nenhum desafio neste mês.</div>')+`<small style="color:var(--mut)">Faltam ${left} ${left===1?'dia':'dias'} para o fim do mês.</small>`+adm;
+}
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='chf')return;e.preventDefault();
+  const k=$('ck').value,o={kind:k,title:$('ct').value.trim(),month:$('cmo').value,bonus:parseInt($('cb').value)||0,game_title:k==='game'?($('cg').value.trim()||null):null,goal_games:k==='goal'?(parseInt($('cn').value)||null):null};
+  if(!o.title||!o.month||!o.bonus)return say('Informe título, mês e bônus.');
+  if(k==='game'&&!o.game_title)return say('Informe o jogo do mês.');
+  if(k==='goal'&&!o.goal_games)return say('Informe a meta de jogos.');
+  const r=await sb.from('challenges').insert(o);
+  say(r.error?'Não foi possível criar o desafio.':'Desafio criado!');if(!r.error)load();
+});
+
+// Quero jogar: sugestões do grupo com votação (1 voto por pessoa em cada jogo)
+function quero(){
+  const votes=id=>wvotes.filter(v=>v.wish_id===id),mine=id=>votes(id).some(v=>v.user_id===me);
+  const list=wishes.slice().sort((a,b)=>votes(b.id).length-votes(a.id).length||String(b.created_at).localeCompare(String(a.created_at)));
+  const top=list[0]&&votes(list[0].id).length?list[0].id:null;
+  const ini=t=>t.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const card=w=>{const n=votes(w.id).length,m=mine(w.id);return `<div class="g wishc${w.id===top?' top':''}">${w.cover_url?`<div class="cv" style="background-image:url('${esc(w.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(w.title)}">${esc(ini(w.title))}</div>`}${w.platform?`<span class="pfb">${esc(w.platform)}</span>`:''}${w.id===top?'<span class="topb">Mais votado</span>':''}<div class="cap"><b class="tt">${esc(w.title)}</b><span class="by" data-a="prof" data-id="${w.user_id}">${av(w.user_id,20)}${esc(name(w.user_id))}</span><button class="vtb${m?'':' ghost'}" data-a="wvote" data-id="${w.id}">${m?'Votado':'Votar'} · ${n}</button></div>${w.user_id===me||isAdmin?`<button class="del" data-a="wdel" data-id="${w.id}" title="Apagar">✕</button>`:''}</div>`};
+  $('pg-quero').innerHTML=`${titulo('Quero jogar','sugestões do grupo, 1 voto por pessoa em cada jogo')}<form id="wf" class="card wf"><input id="wt" maxlength="80" placeholder="Jogo que você quer jogar"><select id="wp"><option value="">Plataforma</option><option>PC</option><option>PlayStation</option><option>Xbox</option><option>Nintendo</option><option>Celular</option><option>Outro</option></select><label class="file">Capa (opcional)<input type="file" id="wi" accept="image/*"></label><button>Sugerir jogo</button></form><div class="shelf">${list.map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nenhuma sugestão ainda. Seja o primeiro!</div>'}</div>`;
+}
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='wf')return;e.preventDefault();
+  const t=$('wt').value.trim();if(!t)return say('Informe o nome do jogo.');
+  let cover=null;const f=$('wi').files[0];
+  try{if(f)cover=await up(f,360)}catch(err){return say('Não consegui enviar a capa.')}
+  const r=await sb.from('wishlist').insert({title:t,platform:$('wp').value||null,cover_url:cover});
+  say(r.error?'Não foi possível sugerir: '+r.error.message:'Sugestão enviada!');if(!r.error)load();
+});
+
+// Imagem do pódio para compartilhar no Discord
+const loadImg=u=>new Promise(r=>{if(!u)return r(null);const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(null);i.src=u});
+async function podiumPng(withAv){
+  const arr=board(counts,mo).slice(0,3);if(!arr.length)return null;
+  try{await document.fonts.load('20px "Press Start 2P"')}catch(e){}
+  const W=1200,H=630,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+  const bg=x.createLinearGradient(0,0,W,H);bg.addColorStop(0,'#0c0d17');bg.addColorStop(1,'#241a4a');x.fillStyle=bg;x.fillRect(0,0,W,H);
+  const gl=x.createRadialGradient(W/2,0,0,W/2,0,620);gl.addColorStop(0,'rgba(88,101,242,.45)');gl.addColorStop(1,'rgba(88,101,242,0)');x.fillStyle=gl;x.fillRect(0,0,W,H);
+  x.textAlign='left';x.fillStyle='#fff';x.font='28px "Press Start 2P",monospace';x.fillText('DISCORD GAMES',48,70);
+  x.fillStyle='#9aa0c3';x.font='16px Inter,sans-serif';x.fillText('Pódio · '+(mo?mlab(mo):'Geral')+' · placar de zeradas',48,102);
+  x.textAlign='right';x.font='13px Inter,sans-serif';x.fillText(location.host+location.pathname,W-48,H-24);
+  const imgs=await Promise.all(arr.map(p=>withAv?loadImg(profs[p.u]?.avatar_url):null));
+  const slots=[[0,W/2,1,150,'#f0a500'],[1,W/2-300,2,115,'#aab2cf'],[2,W/2+300,3,90,'#c3703f']];
+  slots.forEach(([i,cx,pos,bh,col])=>{
+    const p=arr[i];if(!p)return;
+    const by=H-60,top=by-bh,r=pos===1?58:48,ay=top-r-34;
+    x.fillStyle=col;x.beginPath();if(x.roundRect)x.roundRect(cx-120,top,240,bh,[14,14,0,0]);else x.rect(cx-120,top,240,bh);x.fill();
+    x.textAlign='center';x.fillStyle='#1a1530';x.font='26px "Press Start 2P",monospace';x.fillText(String(p.p),cx,top+48);
+    x.font='600 15px Inter,sans-serif';x.fillText('pts · '+p.n+(p.n===1?' jogo':' jogos'),cx,top+76);
+    x.save();x.beginPath();x.arc(cx,ay,r,0,7);x.closePath();x.clip();
+    if(imgs[i])x.drawImage(imgs[i],cx-r,ay-r,r*2,r*2);
+    else{x.fillStyle='hsl('+hue(p.u)+' 70% 45%)';x.fillRect(cx-r,ay-r,r*2,r*2);x.fillStyle='#fff';x.font='bold '+Math.round(r*.7)+'px Inter,sans-serif';x.textBaseline='middle';x.fillText(name(p.u).slice(0,2).toUpperCase(),cx,ay);x.textBaseline='alphabetic'}
+    x.restore();
+    x.strokeStyle=pos===1?'#ffc83d':'#3a3f66';x.lineWidth=4;x.beginPath();x.arc(cx,ay,r,0,7);x.stroke();
+    x.fillStyle='#fff';x.textAlign='center';x.font='bold 22px Inter,sans-serif';x.fillText(name(p.u),cx,ay+r+30);
+    if(pos===1){x.font='34px sans-serif';x.fillText('👑',cx,ay-r-10)}
+  });
+  return new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error('vazio')),'image/png'));
+}
+async function sharePod(copy){
+  say('Gerando imagem…');
+  let b=null;
+  try{b=await podiumPng(true)}catch(e){try{b=await podiumPng(false)}catch(e2){}}
+  if(!b)return say('Ainda não há pódio para compartilhar.');
+  if(copy&&navigator.clipboard&&window.ClipboardItem){
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);return say('Imagem copiada! Cole no Discord com Ctrl+V.')}catch(e){}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='podio-discord-games.png';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);say('Imagem baixada.');
+}
+
 // Imagens: redução, envio e foto de perfil
 function shrink(file,mw){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=Math.min(mw,im.width),h=Math.round(im.height*w/im.width);if(h>mw*1.5){h=Math.round(mw*1.5);w=Math.round(im.width*h/im.height)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};im.onerror=rej;im.src=u})}
 async function upBlob(b){const path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
@@ -536,6 +641,11 @@ document.addEventListener('click',async e=>{
   else if(a==='det')det(id);
   else if(a==='bioedit'){bioEdit=true;render()}
   else if(a==='biocancel'){bioEdit=false;render()}
+  else if(a==='wvote'){const m=wvotes.some(v=>v.wish_id===id&&v.user_id===me);const r=m?await sb.from('wish_votes').delete().eq('wish_id',id).eq('user_id',me):await sb.from('wish_votes').insert({wish_id:id});if(r.error)say('Não foi possível votar.');else load()}
+  else if(a==='wdel'){if(confirm('Apagar esta sugestão?')){const r=await sb.from('wishlist').delete().eq('id',id);if(r.error)say('Não foi possível apagar.');else load()}}
+  else if(a==='chdel'){if(confirm('Apagar este desafio?')){const r=await sb.from('challenges').delete().eq('id',id);if(r.error)say('Não foi possível apagar.');else load()}}
+  else if(a==='shcopy')sharePod(true);
+  else if(a==='shdl')sharePod(false);
   else if(a==='rx')rxTap(t.dataset.t,id,t.dataset.k);
   else if(a==='cdel'){const r=await sb.from('comments').delete().eq('id',id);if(r.error)say('Não foi possível apagar o comentário.');else{await load();if(curDet)det(curDet)}}
   else if(a==='closedp')$('dp').hidden=true;
