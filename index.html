@@ -195,6 +195,15 @@ button.sm{padding:4px 9px;font-size:12px}
 .bact{display:flex;gap:10px;align-items:center;margin-top:14px}
 #pg-perfil .stats{margin-top:20px}
 #pg-perfil .shelf{margin-bottom:8px}
+/* perfil: plataformas e títulos simples */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:8px}
+.plt{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--bd);border-radius:14px;background:var(--card)}
+.plt.off{opacity:.5}.plt b{display:block;font-size:14px}
+.pv{font-size:13px;color:var(--mut);overflow-wrap:anywhere}.pv a{color:#9fb0ff}
+.nic{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;flex:none}
+.nic img{filter:invert(1)}
+.nlab{display:flex;align-items:center;gap:8px}
+.sech{display:flex;align-items:center;gap:12px}.sech h2{flex:1}
 
 </style>
 </head>
@@ -213,16 +222,16 @@ button.sm{padding:4px 9px;font-size:12px}
     <div><div class="bn">DISCORD <span>GAMES</span></div><div class="bs">Placar de zeradas · quem zerou mais?</div></div></div>
     <div class="acts"><button data-a="add">➕ Registrar jogo</button><button class="ghost" data-a="out">Sair</button></div>
   </header>
-  <nav id="nav"><a href="#/home" data-p="home">🏠 Home</a><a href="#/estante" data-p="estante">📚 Estante</a><a href="#/rankings" data-p="rankings">🏅 Rankings</a><a href="#/aguardando" data-p="aguardando">⏳ Aguardando <span id="pcnt"></span></a><a href="#/perfil" data-p="perfil">👤 Perfil</a></nav>
+  <nav id="nav"><a href="#/home" data-p="home">Home</a><a href="#/estante" data-p="estante">Estante</a><a href="#/rankings" data-p="rankings">Rankings</a><a href="#/aguardando" data-p="aguardando">Aguardando <span id="pcnt"></span></a><a href="#/perfil" data-p="perfil">Perfil</a></nav>
   <div id="dl"></div>
   <div id="pg-home">
     <div class="card cta"><div><b>Zerou um jogo?</b><div class="bs">Registre com comprovante e peça para um amigo confirmar.</div></div><button data-a="add">➕ Registrar jogo</button></div>
-    <h2 class="sec"><i>📊</i><span>Resumo<small>a competição em números</small></span></h2><div class="stats" id="sum"></div>
-    <h2 class="sec"><i>🏆</i><span>Pódio<small>ranking por pontos</small></span></h2><div class="chips" id="mc"></div><div class="card" id="pod"></div>
-    <h2 class="sec"><i>🕹️</i><span>Últimos zerados<small>o que saiu do forno</small></span></h2><div class="marq" id="rec"></div>
+    <h2 class="sec"><span>Resumo<small>a competição em números</small></span></h2><div class="stats" id="sum"></div>
+    <h2 class="sec"><span>Pódio<small>ranking por pontos</small></span></h2><div class="chips" id="mc"></div><div class="card" id="pod"></div>
+    <h2 class="sec"><span>Últimos zerados<small>o que saiu do forno</small></span></h2><div class="marq" id="rec"></div>
   </div>
   <div id="pg-estante" hidden>
-    <h2 class="sec"><i>📚</i><span>Estante<small>toda a coleção da galera</small></span></h2><div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
+    <h2 class="sec"><span>Estante<small>toda a coleção da galera</small></span></h2><div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
   </div>
   <div id="pg-rankings" hidden></div>
   <div id="pg-aguardando" hidden></div>
@@ -352,7 +361,7 @@ function perfil(id){
   const own=id===me,mine=games.filter(g=>g.user_id===id),okm=mine.filter(ok),pt=sumPts(okm),hrs=okm.reduce((s,g)=>s+ +g.hours,0),rs=mine.filter(g=>g.rating!=null),avg=rs.length?Math.round(rs.reduce((s,g)=>s+ +g.rating,0)/rs.length*10)/10:'—';
   $('pg-perfil').innerHTML=`<div class="card prof">${av(id,96)}<div><h2 style="margin:0">${esc(p.name)} ${topBadge(id)}</h2><div class="bs">${okm.length} ${okm.length===1?'jogo confirmado':'jogos confirmados'}</div>${own?`<div class="chips" style="margin:10px 0 0"><label class="chip" style="cursor:pointer">📷 Trocar foto<input type="file" id="avf" accept="image/*" hidden></label><button class="chip" data-a="nick">✏️ Trocar apelido</button>${gAvatar?'<button class="chip" data-a="gphoto">↩ Usar foto do Google</button>':''}</div>`:''}</div></div>
   ${bioHtml(p,own)}${badgesHtml(id)}<div class="stats">${tile('⭐ Pontos',pt)}${tile('✅ Confirmados',okm.length)}${tile('📝 Registrados',mine.length)}${tile('⏱️ Horas totais',Math.round(hrs*10)/10+' h')}${tile('🎯 Nota média',avg)}</div>
-  <h2 class="sec"><i>🎮</i><span>${own?'Meus jogos':'Jogos de '+esc(p.name)}<small>pontos e comprovantes</small></span></h2>
+  <h2 class="sec"><span>${own?'Meus jogos':'Jogos de '+esc(p.name)}<small>pontos e comprovantes</small></span></h2>
   <div class="shelf">${mine.map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nenhum jogo registrado.</div>'}</div>`;
 }
 
@@ -400,7 +409,7 @@ function rxPaint(t,id){const el=document.querySelector(`.rx[data-rx="${t}:${id}"
 function rxTap(t,id,k){
   if(ownerOf(t,id)===me||rxMine(t,id)||(round&&!(round.t===t&&round.id===id)))return;
   if(!round){round={t,id,l:0,d:0,left:RX.secs,t0:Date.now()};round.iv=setInterval(()=>{round.left--;if(round.left<=0)rxEnd();else rxPaint(round.t,round.id)},1000)}
-  round[k]++;rxPaint(t,id);
+  round[k]++;rxPaint(t,id);quack(k==='l');
 }
 async function rxEnd(){
   const r=round;if(!r)return;clearInterval(r.iv);round=null;
@@ -420,14 +429,16 @@ document.addEventListener('submit',async e=>{
   await load();if(curDet)det(curDet);
 });
 
-// Perfil: sobre mim e links das plataformas
+// Perfil: sobre mim e plataformas (com logos)
 let bioEdit=false;
-const NET=[['steam','Steam','🎮'],['xbox','Xbox','🟩'],['playstation','PlayStation','🔵'],['nintendo','Nintendo','🔴']];
+const NET=[['steam','Steam','steam','#1b2838'],['xbox','Xbox','xbox','#107c10'],['playstation','PlayStation','playstation','#0070d1'],['nintendo','Nintendo','nintendoswitch','#e60012']];
+const icon=(slug,bg,sz)=>`<span class="nic" style="background:${bg};width:${sz}px;height:${sz}px"><img src="https://cdn.jsdelivr.net/npm/simple-icons@11.14.0/icons/${slug}.svg" alt="" width="${sz*.6|0}" height="${sz*.6|0}" referrerpolicy="no-referrer"></span>`;
 const netTxt=v=>/^https?:\/\//i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v.replace(/^https?:\/\/(www\.)?/i,'').slice(0,40))}</a>`:esc(v);
+const titulo=(t,s)=>`<h2 class="sec"><span>${t}${s?`<small>${s}</small>`:''}</span></h2>`;
 function bioHtml(p,own){
-  const view=`<div class="rv">${p.about?esc(p.about):`<span style="color:var(--mut)">Nada escrito ainda.${own?' Clique em Editar perfil para contar sobre você.':''}</span>`}</div><div class="nets">${NET.filter(([k])=>p[k]).map(([k,l,i])=>`<span class="net">${i} <b>${l}</b> ${netTxt(p[k])}</span>`).join('')}</div>`;
-  const form=`<form id="pfrm"><textarea id="ab" maxlength="500" rows="4" placeholder="Sobre mim: o que você joga, gêneros favoritos…">${esc(p.about||'')}</textarea><div class="netg">${NET.map(([k,l,i])=>`<label class="h">${i} ${l}<input id="n_${k}" maxlength="120" placeholder="usuário ou link" value="${esc(p[k]||'')}"></label>`).join('')}</div><div class="bact"><button>Salvar perfil</button><button type="button" class="ghost" data-a="biocancel">Cancelar</button></div></form>`;
-  return `<h2 class="sec"><i>📝</i><span>Sobre<small>quem é e onde jogar</small></span></h2><div class="card">${own&&bioEdit?form:view}${own&&!bioEdit?'<div class="bact"><button class="chip" data-a="bioedit">✏️ Editar perfil</button></div>':''}</div>`;
+  if(own&&bioEdit)return `<form id="pfrm">${titulo('Sobre mim','conte um pouco sobre você')}<div class="card"><textarea id="ab" maxlength="500" rows="4" placeholder="Sobre mim: o que você joga, gêneros favoritos…">${esc(p.about||'')}</textarea></div>${titulo('Plataformas','seu usuário ou o link do perfil')}<div class="card"><div class="netg">${NET.map(([k,l,s,c])=>`<label class="h"><span class="nlab">${icon(s,c,28)}${l}</span><input id="n_${k}" maxlength="120" placeholder="usuário ou link" value="${esc(p[k]||'')}"></label>`).join('')}</div></div><div class="bact"><button>Salvar perfil</button><button type="button" class="ghost" data-a="biocancel">Cancelar</button></div></form>`;
+  const about=p.about?`<div class="rv">${esc(p.about)}</div>`:`<span style="color:var(--mut)">Nada escrito ainda.${own?' Clique em Editar perfil para contar sobre você.':''}</span>`;
+  return `<div class="sech">${titulo('Sobre mim','quem é e o que joga')}${own?'<button class="chip" data-a="bioedit">Editar perfil</button>':''}</div><div class="card">${about}</div>${titulo('Plataformas','onde jogar com a galera')}<div class="pgrid">${NET.map(([k,l,s,c])=>`<div class="plt${p[k]?'':' off'}">${icon(s,c,46)}<div><b>${l}</b><div class="pv">${p[k]?netTxt(p[k]):'Não informado'}</div></div></div>`).join('')}</div>`;
 }
 document.addEventListener('submit',async e=>{
   if(e.target.id!=='pfrm')return;e.preventDefault();
@@ -443,7 +454,7 @@ function topBadge(u){const n=zeradas(u),b=BADGES.filter(x=>n>=x[0]).pop();return
 function badgesHtml(u){
   const n=zeradas(u),nx=BADGES.find(x=>n<x[0]),prev=BADGES.filter(x=>n>=x[0]).pop(),from=prev?prev[0]:0;
   const bar=nx?`<div class="bprog"><i style="width:${Math.round((n-from)/(nx[0]-from)*100)}%"></i></div><small>${n}/${nx[0]} jogos para <b>${esc(nx[1])}</b></small>`:'<small>Todas as insígnias conquistadas! 👑</small>';
-  return `<h2 class="sec"><i>🏅</i><span>Insígnias<small>por jogos zerados</small></span></h2><div class="card"><div class="badges">${BADGES.map(([k,l,i])=>`<div class="bd${n>=k?' on':''}"><span>${i}</span><b>${esc(l)}</b><small>${k} ${k===1?'jogo':'jogos'}</small></div>`).join('')}</div>${bar}</div>`;
+  return `<h2 class="sec"><span>Insígnias<small>por jogos zerados</small></span></h2><div class="card"><div class="badges">${BADGES.map(([k,l,i])=>`<div class="bd${n>=k?' on':''}"><span>${i}</span><b>${esc(l)}</b><small>${k} ${k===1?'jogo':'jogos'}</small></div>`).join('')}</div>${bar}</div>`;
 }
 
 // Páginas: Rankings gerais e Aguardando confirmações
@@ -454,15 +465,15 @@ function rankings(){
   const P=Object.fromEntries(board(ok).map(x=>[x.u,x.p]));
   const list=(t,i,key,fmt)=>{
     const rows=Object.values(by).map(o=>({u:o.u,v:key(o)})).filter(r=>r.v>0).sort((a,b)=>b.v-a.v).slice(0,10);
-    return `<div class="card rk"><h3>${i} ${t}</h3>${rows.map((r,k)=>`<div class="rkr" data-a="prof" data-id="${r.u}"><span class="rkp">${k+1}</span>${av(r.u,28)}<b>${esc(name(r.u))} ${topBadge(r.u)}</b><span class="rkv">${fmt(r.v)}</span></div>`).join('')||'<div class="empty">Sem dados ainda.</div>'}</div>`;
+    return `<div class="card rk"><h3>${t}</h3>${rows.map((r,k)=>`<div class="rkr" data-a="prof" data-id="${r.u}"><span class="rkp">${k+1}</span>${av(r.u,28)}<b>${esc(name(r.u))} ${topBadge(r.u)}</b><span class="rkv">${fmt(r.v)}</span></div>`).join('')||'<div class="empty">Sem dados ainda.</div>'}</div>`;
   };
   const avg=o=>o.rs.length?o.rs.reduce((a,b)=>a+b,0)/o.rs.length:0;
-  $('pg-rankings').innerHTML=`<h2 class="sec"><i>🏅</i><span>Rankings gerais<small>todos os jogos confirmados</small></span></h2><div class="rkg">${list('Pontos totais','⭐',o=>P[o.u]||0,v=>v+' pts')}${list('Jogos zerados','🎮',o=>o.n,v=>v)}${list('Horas jogadas','⏱️',o=>o.h,v=>Math.round(v*10)/10+' h')}${list('Nota média dos jogos','📝',avg,v=>'⭐ '+Math.round(v*10)/10)}${list('Curtidas recebidas (saldo)','👍',o=>o.l-o.d,v=>'+'+v)}</div>`;
+  $('pg-rankings').innerHTML=`<h2 class="sec"><span>Rankings gerais<small>todos os jogos confirmados</small></span></h2><div class="rkg">${list('Pontos totais','⭐',o=>P[o.u]||0,v=>v+' pts')}${list('Jogos zerados','🎮',o=>o.n,v=>v)}${list('Horas jogadas','⏱️',o=>o.h,v=>Math.round(v*10)/10+' h')}${list('Nota média dos jogos','📝',avg,v=>'⭐ '+Math.round(v*10)/10)}${list('Curtidas recebidas (saldo)','👍',o=>o.l-o.d,v=>'+'+v)}</div>`;
 }
 function aguardando(){
   const pend=g=>nconf(g)<CFG.confirms,mineC=g=>confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev);
   const forMe=games.filter(g=>pend(g)&&g.user_id!==me&&!mineC(g)),mine=games.filter(g=>pend(g)&&g.user_id===me);
-  const sec=(i,t,s,l,e)=>`<h2 class="sec"><i>${i}</i><span>${t}<small>${s}</small></span></h2><div class="shelf">${l.map(card).join('')||`<div class="empty" style="grid-column:1/-1">${e}</div>`}</div>`;
+  const sec=(i,t,s,l,e)=>`<h2 class="sec"><span>${t}<small>${s}</small></span></h2><div class="shelf">${l.map(card).join('')||`<div class="empty" style="grid-column:1/-1">${e}</div>`}</div>`;
   $('pg-aguardando').innerHTML=sec('✅','Para eu confirmar','jogos dos amigos esperando você',forMe,'Nada para confirmar agora. 🎉')+sec('⏳','Os meus aguardando','esperando a aprovação de um amigo',mine,'Nenhum jogo seu aguardando.');
 }
 
@@ -565,6 +576,26 @@ function confetti(){
   const cx=cv.getContext('2d'),cols=['#5865f2','#b44bff','#ffc83d','#3ba55d','#ff5d8f','#3ba5ff'];cv.width=innerWidth;cv.height=innerHeight;
   const ps=Array.from({length:110},()=>({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*14,vy:-Math.random()*13-3,s:5+(Math.random()*6|0),c:cols[Math.random()*6|0]}));
   let t=0;(function tick(){cx.clearRect(0,0,cv.width,cv.height);t++;for(const p of ps){p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.vx*=.99;cx.fillStyle=p.c;cx.fillRect(p.x,p.y,p.s,p.s)}if(t<150)requestAnimationFrame(tick);else cv.remove()})();
+}
+
+// Som de quack (sintetizado no navegador, sem arquivo de áudio)
+let actx=null;
+function quack(up){
+  try{
+    actx=actx||new(window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const c=actx,t=c.currentTime,base=(up?540:380)*(0.95+Math.random()*.1);
+    const o=c.createOscillator(),o2=c.createOscillator(),f=c.createBiquadFilter(),f2=c.createBiquadFilter();
+    o.type='sawtooth';o2.type='square';
+    [o,o2].forEach((x,i)=>{x.frequency.setValueAtTime(base*1.5*(i?1.01:1),t);x.frequency.exponentialRampToValueAtTime(base*.7,t+.18)});
+    f.type='bandpass';f.frequency.value=900;f.Q.value=3;
+    f2.type='bandpass';f2.frequency.value=1800;f2.Q.value=4;
+    const lfo=c.createOscillator(),ld=c.createGain(),am=c.createGain(),out=c.createGain();
+    lfo.frequency.value=48;ld.gain.value=.5;am.gain.value=.6;lfo.connect(ld);ld.connect(am.gain);
+    out.gain.setValueAtTime(.0001,t);out.gain.exponentialRampToValueAtTime(.35,t+.015);out.gain.exponentialRampToValueAtTime(.0001,t+.22);
+    o.connect(f);o2.connect(f);f.connect(f2);f2.connect(am);am.connect(out);out.connect(c.destination);
+    [o,o2,lfo].forEach(x=>{x.start(t);x.stop(t+.25)});
+  }catch(e){}
 }
 
 // Login com Google e inicialização
