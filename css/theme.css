@@ -72,3 +72,27 @@ button.sm{padding:4px 9px;font-size:12px}
 .netg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
 #pfrm textarea{min-height:90px}
 @media(max-width:480px){.netg{grid-template-columns:1fr}}
+/* insígnias, rankings, aguardando e faixa automática */
+.badges{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px}
+.bd{text-align:center;padding:12px 8px;border:1px solid var(--bd);border-radius:12px;filter:grayscale(1);opacity:.45}
+.bd.on{filter:none;opacity:1;border-color:#7c8aff;box-shadow:0 0 18px rgba(88,101,242,.45)}
+.bd span{font-size:28px;display:block}.bd b{display:block;font-size:12px;margin-top:4px}.bd small{color:var(--mut);font-size:11px}
+.bprog{height:8px;background:var(--bd);border-radius:8px;overflow:hidden;margin-bottom:6px}
+.bprog i{display:block;height:100%;background:linear-gradient(90deg,#5865f2,#b44bff)}
+.bdg{font-size:14px}
+.rkg{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.rk h3{margin:0 0 12px;font-family:var(--px);font-size:11px;line-height:1.6;color:var(--mut)}
+.rkr{display:flex;align-items:center;gap:10px;padding:8px 6px;border-top:1px solid var(--bd);cursor:pointer}.rkr:first-of-type{border-top:0}
+.rkp{width:22px;text-align:center;font-family:var(--px);font-size:10px;color:var(--mut)}
+.rkr:nth-of-type(1) .rkp{color:var(--gold)}
+.rkr b{flex:1;font-size:14px;overflow-wrap:anywhere}
+.rkv{font-family:var(--px);font-size:11px}
+.msn{font-size:11px;color:var(--mut);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#f[data-k="game"] .only-m,#f[data-k="milestone"] .only-g{display:none!important}
+.marq{overflow:hidden;padding:6px 0}
+.marq .track{display:flex;gap:12px;width:max-content;animation:marq linear infinite}
+.marq .track.static{animation:none;width:auto;flex-wrap:wrap}
+.marq .g{flex:0 0 170px}
+.marq:hover .track,.marq:active .track{animation-play-state:paused}
+@keyframes marq{to{transform:translateX(calc(-50% - 6px))}}
+@media(prefers-reduced-motion:reduce){.marq{overflow-x:auto}}
