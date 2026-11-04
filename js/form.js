@@ -20,6 +20,7 @@ $('f').onsubmit=async e=>{
   e.preventDefault();const btn=$('b');btn.disabled=true;
   try{
     const g=readForm(),ed=editing?games.find(x=>x.id===editing):null,pfile=$('prf').files[0],cfile=$('img').files[0];
+    if(!g.title)return say('Informe o nome do jogo (não vale só espaços).');
     if(!pfile&&!ed)return say('O comprovante é obrigatório.');
     if(!(g.hours>0)||!g.difficulty)return say('Informe as horas jogadas e a dificuldade.');
     const de=dateErr(g);if(de)return say(de);

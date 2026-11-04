@@ -10,6 +10,8 @@ document.addEventListener('click',async e=>{
   if(a==='add')openForm();
   else if(a==='close')closeAll();
   else if(a==='det')det(id);
+  else if(a==='rx')rxTap(t.dataset.t,id,t.dataset.k);
+  else if(a==='cdel'){const r=await sb.from('comments').delete().eq('id',id);if(r.error)say('Não foi possível apagar o comentário.');else{await load();if(curDet)det(curDet)}}
   else if(a==='closedp')$('dp').hidden=true;
   else if(a==='closelb')$('lb').hidden=true;
   else if(a==='prof'){location.hash='#/perfil/'+id}

@@ -8,7 +8,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 const days=g=>Math.round((new Date(g.end_date+'T00:00')-new Date(g.start_date+'T00:00'))/864e5)+1;
 const fd=s=>s?s.split('-').reverse().join('/'):'';
 const fdt=s=>s?new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-let podSig='',lastLead=null;
+let podSig='',lastLead=null,cmts=[],reacts=[];
 const name=u=>profs[u]?.name||'Jogador';
 const hue=s=>[...String(s)].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,0);
 const grad=s=>{const h=hue(s);return `linear-gradient(145deg,hsl(${h} 70% 48%),hsl(${(h+55)%360} 70% 28%))`};
