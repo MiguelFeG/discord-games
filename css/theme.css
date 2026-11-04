@@ -96,3 +96,16 @@ button.sm{padding:4px 9px;font-size:12px}
 .marq:hover .track,.marq:active .track{animation-play-state:paused}
 @keyframes marq{to{transform:translateX(calc(-50% - 6px))}}
 @media(prefers-reduced-motion:reduce){.marq{overflow-x:auto}}
+/* espaçamento do perfil */
+.bact{display:flex;gap:10px;align-items:center;margin-top:14px}
+#pg-perfil .stats{margin-top:20px}
+#pg-perfil .shelf{margin-bottom:8px}
+/* perfil: plataformas e títulos simples */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:8px}
+.plt{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--bd);border-radius:14px;background:var(--card)}
+.plt.off{opacity:.5}.plt b{display:block;font-size:14px}
+.pv{font-size:13px;color:var(--mut);overflow-wrap:anywhere}.pv a{color:#9fb0ff}
+.nic{display:inline-flex;align-items:center;justify-content:center;border-radius:12px;flex:none}
+.nic img{filter:invert(1)}
+.nlab{display:flex;align-items:center;gap:8px}
+.sech{display:flex;align-items:center;gap:12px}.sech h2{flex:1}
