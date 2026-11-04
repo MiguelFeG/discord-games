@@ -219,6 +219,18 @@ details.ch summary{cursor:pointer;color:var(--mut)}
 .topb{position:absolute;top:32px;left:6px;background:var(--gold);color:#1a1530;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
 .vtb{width:100%;margin-top:auto}
 @media(max-width:560px){.wf{grid-template-columns:1fr}}
+/* feed, hall da fama e gráfico */
+.feed{padding:6px 14px}
+.fi{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--bd);cursor:pointer}.fi:first-child{border-top:0}
+.fi>div{flex:1;min-width:0;font-size:14px;overflow-wrap:anywhere}.fi small{color:var(--mut);font-size:12px;white-space:nowrap}
+.hf h3{margin:0 0 10px;font-family:var(--px);font-size:11px;line-height:1.6}
+.hfr{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--bd);cursor:pointer}.hfr:first-of-type{border-top:0}
+.hfp{width:28px;font-family:var(--px);font-size:10px;color:var(--mut)}
+.hfr.p1 .hfp{color:var(--gold)}.hfr.p2 .hfp{color:#c5cbe0}.hfr.p3 .hfp{color:#d9895a}
+.hfr b{flex:1;font-size:14px;overflow-wrap:anywhere}
+.chart{width:100%;height:auto;display:block}.chart text{fill:var(--mut);font:11px Inter,sans-serif}.chart .gl{stroke:var(--bd);stroke-width:1}
+.lgs{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.lg{display:flex;align-items:center;gap:6px}.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}
 
 </style>
 </head>
@@ -245,6 +257,7 @@ details.ch summary{cursor:pointer;color:var(--mut)}
     <h2 class="sec"><span>Desafios do mês<small>bônus em pontos para quem cumprir</small></span></h2><div id="chl"></div>
     <h2 class="sec"><span>Pódio<small>ranking por pontos</small></span></h2><div class="chips" id="mc"></div><div class="card" id="pod"></div>
     <h2 class="sec"><span>Últimos zerados<small>o que saiu do forno</small></span></h2><div class="marq" id="rec"></div>
+    <h2 class="sec"><span>Atividade recente<small>o que a galera andou fazendo</small></span></h2><div class="card feed" id="feed"></div>
   </div>
   <div id="pg-estante" hidden>
     <h2 class="sec"><span>Estante<small>toda a coleção da galera</small></span></h2><div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
@@ -353,9 +366,9 @@ function render(){
   if(isAdmin)h+=`<input type="date" id="dli" value="${deadline||''}"><button class="chip" data-a="dls">salvar prazo</button>${deadline?'<button class="chip" data-a="dlc">remover prazo</button>':''}`;
   $('dl').innerHTML=h;
   {const n=games.filter(g=>g.user_id!==me&&nconf(g)<CFG.confirms&&!confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev)).length;$('pcnt').textContent=n?`(${n})`:''}
-  if(pg==='home')home(board(counts,mo),all);else if(pg==='estante')estante();else if(pg==='quero')quero();else if(pg==='rankings')rankings();else if(pg==='aguardando')aguardando();else perfil(id);
+  if(pg==='home')home(board(counts,mo),all);else if(pg==='estante')estante();else if(pg==='quero')quero();else if(pg==='rankings'){rankings();rankExtras()}else if(pg==='aguardando')aguardando();else perfil(id);
 }
-function home(arr,all){chRender();
+function home(arr,all){chRender();feedRender();
   const okg=games.filter(ok),hrs=okg.reduce((s,g)=>s+ +g.hours,0);
   $('sum').innerHTML=tile('👑 Líder',all[0]?`${esc(name(all[0].u))} · ${all[0].p} pts`:'—')+tile('✅ Jogos confirmados',okg.length)+tile('⏱️ Horas jogadas',Math.round(hrs*10)/10+' h')+tile('🎮 Jogadores',Object.keys(profs).length);
   const sig=arr.slice(0,3).map(p=>p.u+':'+p.p).join('|'),anim=sig!==podSig;podSig=sig;
@@ -582,6 +595,53 @@ async function sharePod(copy){
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);say('Imagem baixada.');
 }
 
+// Feed de atividade (últimas 15), montado a partir dos dados que o site já tem
+const ago=s=>{const m=Math.floor((Date.now()-new Date(s))/6e4);return m<1?'agora':m<60?`há ${m} min`:m<1440?`há ${Math.floor(m/60)} h`:m<10080?`há ${Math.floor(m/1440)} d`:fdt(s).slice(0,10)};
+function feedItems(){
+  const G=id=>games.find(x=>x.id===id),L=[];
+  games.forEach(g=>L.push({t:g.created_at,u:g.user_id,g:g.id,x:g.kind==='milestone'?`registrou um marco em <b>${esc(g.title)}</b>`:`registrou <b>${esc(g.title)}</b>`}));
+  confs.forEach(c=>{const g=G(c.game_id);if(g&&c.created_at)L.push({t:c.created_at,u:c.user_id,g:g.id,x:`confirmou o comprovante de <b>${esc(g.title)}</b> (${esc(name(g.user_id))})`})});
+  cmts.forEach(c=>{const g=G(c.game_id);if(g)L.push({t:c.created_at,u:c.user_id,g:g.id,x:`comentou em <b>${esc(g.title)}</b>: “${esc(c.body.length>70?c.body.slice(0,70)+'…':c.body)}”`})});
+  wishes.forEach(w=>L.push({t:w.created_at,u:w.user_id,n:'quero',x:`sugeriu <b>${esc(w.title)}</b> em Quero jogar`}));
+  chals.forEach(c=>L.push({t:c.created_at,u:c.created_by,x:`criou o desafio <b>${esc(c.title)}</b> (+${c.bonus} pts)`}));
+  return L.filter(i=>i.t).sort((a,b)=>String(b.t).localeCompare(String(a.t))).slice(0,15);
+}
+function feedRender(){
+  $('feed').innerHTML=feedItems().map(i=>`<div class="fi"${i.g?` data-a="det" data-id="${i.g}"`:i.n?` data-a="nav" data-id="${i.n}"`:''}>${i.u?av(i.u,32):''}<div><b>${esc(name(i.u))}</b> ${i.x}</div><small>${ago(i.t)}</small></div>`).join('')||'<div class="empty">Nada por aqui ainda.</div>';
+}
+
+// Hall da fama (pódio de cada mês) e gráfico de evolução dos pontos por semana
+const COL=['#5865f2','#ffc83d','#3ba55d','#ff5d8f','#3ba5ff','#b44bff','#ff9f43','#2ee6d6','#c3c9ff'];
+function hallHtml(){
+  const cur=today().slice(0,7),ms=[...new Set(games.filter(ok).map(g=>g.end_date.slice(0,7)))].sort().reverse();
+  const cards=ms.map(m=>{
+    const t=board(g=>ok(g)&&g.end_date.slice(0,7)===m,m).slice(0,3);
+    return t.length?`<div class="card hf"><h3>${mlab(m)}${m===cur?' <span class="tag">em andamento</span>':''}</h3>${t.map((r,i)=>`<div class="hfr p${i+1}" data-a="prof" data-id="${r.u}"><span class="hfp">${i+1}º</span>${av(r.u,30)}<b>${esc(name(r.u))} ${topBadge(r.u)}</b><span class="rkv">${r.p} pts</span></div>`).join('')}</div>`:'';
+  }).join('');
+  return titulo('Hall da fama','pódio de cada mês')+`<div class="rkg">${cards||'<div class="empty">Ainda sem meses com pontos.</div>'}</div>`;
+}
+function chartHtml(){
+  const head=titulo('Evolução dos pontos','pontos acumulados por semana'),okg=games.filter(ok);
+  if(!okg.length)return head+'<div class="card"><div class="empty">Sem dados ainda.</div></div>';
+  const iso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const mon=s=>{const x=new Date(s+'T00:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+  const first=mon(okg.reduce((m,g)=>g.end_date<m?g.end_date:m,okg[0].end_date)),last=mon(today()),weeks=[];
+  for(let d=new Date(first);d<=last;d.setDate(d.getDate()+7)){const e=new Date(d);e.setDate(e.getDate()+6);weeks.push({s:iso(d),e:iso(e)})}
+  const W=weeks.slice(-52),total=board(ok),users=total.slice(0,8).map(x=>x.u);
+  if(!users.includes(me)&&total.some(x=>x.u===me))users.push(me);
+  const dd=(c,u)=>{const gs=chGames(c,u).slice().sort((a,b)=>a.end_date.localeCompare(b.end_date));return c.kind==='game'?(gs.find(g=>normT(g.title)===normT(c.game_title))||{}).end_date||null:(gs.length>=c.goal_games?gs[c.goal_games-1].end_date:null)};
+  const val=(u,e)=>sumPts(okg.filter(g=>g.user_id===u&&g.end_date<=e))+chals.reduce((s,c)=>{const d=dd(c,u);return s+(d&&d<=e?c.bonus:0)},0);
+  const series=users.map((u,i)=>({u,c:COL[i%COL.length],v:[0].concat(W.map(w=>val(u,w.e)))}));
+  const n=W.length+1,mx=Math.max(50,Math.ceil(Math.max(...series.flatMap(s=>s.v))/50)*50);
+  const Wd=820,H=320,L=46,R=16,T=14,B=30,X=i=>L+(Wd-L-R)*i/(n-1),Y=v=>T+(H-T-B)*(1-v/mx);
+  const grid=[0,1,2,3,4].map(k=>{const v=mx*k/4;return `<line class="gl" x1="${L}" x2="${Wd-R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-8}" y="${Y(v)+4}" text-anchor="end">${Math.round(v)}</text>`}).join('');
+  const step=Math.max(1,Math.ceil((n-1)/6)),xl=[];for(let i=1;i<n;i+=step)xl.push(`<text x="${X(i)}" y="${H-8}" text-anchor="middle">${fd(W[i-1].s).slice(0,5)}</text>`);
+  const lines=series.map(s=>`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" points="${s.v.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/><circle cx="${X(n-1)}" cy="${Y(s.v[n-1])}" r="4.5" fill="${s.c}"/>`).join('');
+  const lg=series.map(s=>`<span class="lg"><i style="background:${s.c}"></i>${esc(name(s.u))} · ${s.v[n-1]} pts</span>`).join('');
+  return head+`<div class="card"><svg class="chart" viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Evolução dos pontos por semana">${grid}${xl.join('')}${lines}</svg><div class="lgs">${lg}</div></div>`;
+}
+function rankExtras(){$('pg-rankings').insertAdjacentHTML('beforeend',hallHtml()+chartHtml())}
+
 // Imagens: redução, envio e foto de perfil
 function shrink(file,mw){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=Math.min(mw,im.width),h=Math.round(im.height*w/im.width);if(h>mw*1.5){h=Math.round(mw*1.5);w=Math.round(im.width*h/im.height)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};im.onerror=rej;im.src=u})}
 async function upBlob(b){const path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
@@ -646,6 +706,7 @@ document.addEventListener('click',async e=>{
   else if(a==='chdel'){if(confirm('Apagar este desafio?')){const r=await sb.from('challenges').delete().eq('id',id);if(r.error)say('Não foi possível apagar.');else load()}}
   else if(a==='shcopy')sharePod(true);
   else if(a==='shdl')sharePod(false);
+  else if(a==='nav')location.hash='#/'+id;
   else if(a==='rx')rxTap(t.dataset.t,id,t.dataset.k);
   else if(a==='cdel'){const r=await sb.from('comments').delete().eq('id',id);if(r.error)say('Não foi possível apagar o comentário.');else{await load();if(curDet)det(curDet)}}
   else if(a==='closedp')$('dp').hidden=true;
