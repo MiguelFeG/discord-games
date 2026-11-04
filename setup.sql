@@ -80,3 +80,46 @@ create or replace function stamp_conf() returns trigger language plpgsql as $$
 begin new.created_at:=now(); return new; end $$;
 drop trigger if exists t_stamp on confirmations;
 create trigger t_stamp before insert or update on confirmations for each row execute function stamp_conf();
+-- DISCORD GAMES · atualização 2 · cole no SQL Editor do Supabase e clique em Run
+
+-- 1) título do jogo não pode ser só espaços (vale para jogos novos e editados)
+alter table games add constraint games_title_nonblank check(char_length(btrim(title))>=1) not valid;
+
+-- 2) perfil: sobre mim e links das plataformas
+alter table profiles add column if not exists about text check(char_length(about)<=500);
+alter table profiles add column if not exists steam text check(char_length(steam)<=120);
+alter table profiles add column if not exists xbox text check(char_length(xbox)<=120);
+alter table profiles add column if not exists playstation text check(char_length(playstation)<=120);
+alter table profiles add column if not exists nintendo text check(char_length(nintendo)<=120);
+
+-- 3) comentários nos jogos
+create table comments(
+  id uuid primary key default gen_random_uuid(),
+  game_id uuid not null references games on delete cascade,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
+  body text not null check(char_length(btrim(body)) between 1 and 500),
+  created_at timestamptz not null default now()
+);
+alter table comments enable row level security;
+create policy "ver comentarios" on comments for select to authenticated using(true);
+create policy "comentar" on comments for insert to authenticated with check(user_id=auth.uid());
+create policy "apagar comentario meu ou do meu jogo" on comments for delete to authenticated
+  using(user_id=auth.uid() or exists(select 1 from games g where g.id=game_id and g.user_id=auth.uid()));
+
+-- 4) likes e deslikes (uma rodada por pessoa em cada jogo ou comentário; não dá para avaliar o próprio)
+create table reactions(
+  target_type text not null check(target_type in ('game','comment')),
+  target_id uuid not null,
+  user_id uuid not null default auth.uid() references auth.users on delete cascade,
+  likes int not null default 0 check(likes between 0 and 500),
+  dislikes int not null default 0 check(dislikes between 0 and 500),
+  created_at timestamptz not null default now(),
+  primary key(target_type,target_id,user_id)
+);
+alter table reactions enable row level security;
+create policy "ver reacoes" on reactions for select to authenticated using(true);
+create policy "reagir ao conteudo de outro" on reactions for insert to authenticated with check(
+  user_id=auth.uid() and (
+    (target_type='game' and exists(select 1 from games g where g.id=target_id and g.user_id<>auth.uid()))
+    or (target_type='comment' and exists(select 1 from comments c where c.id=target_id and c.user_id<>auth.uid()))
+  ));

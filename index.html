@@ -43,7 +43,7 @@
 <div id="ov" hidden><div class="card" id="md">
   <button type="button" id="mx" data-a="close">✕</button><h3 id="mt">Registrar jogo zerado</h3>
   <form id="f">
-    <input id="t" maxlength="80" placeholder="Nome do jogo" required>
+    <input id="t" maxlength="80" placeholder="Nome do jogo" required pattern=".*\S.*" title="Informe o nome do jogo">
     <label class="file" id="fl">📷 Capa (opcional)<input type="file" id="img" accept="image/*"></label>
     <label class="file" id="pl">🧾 Comprovante *<input type="file" id="prf" accept="image/*"></label>
     <label class="h">Início<input type="date" id="ds"></label>
@@ -68,6 +68,8 @@
 <script src="js/utils.js"></script>
 <script src="js/data.js"></script>
 <script src="js/render.js"></script>
+<script src="js/social.js"></script>
+<script src="js/profile.js"></script>
 <script src="js/upload.js"></script>
 <script src="js/form.js"></script>
 <script src="js/actions.js"></script>

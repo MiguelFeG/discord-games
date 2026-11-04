@@ -52,6 +52,8 @@ Entre uma vez no site com o Google. Depois, no SQL Editor do Supabase, rode (tro
     js/render.js     Home, Estante, Perfil, cards e pop-up
     js/upload.js     imagens e foto de perfil
     js/form.js       formulário de jogos
+    js/social.js     comentários e likes/deslikes
+    js/profile.js    sobre mim e links das plataformas
     js/actions.js    cliques e navegação
     js/fx.js         partículas e confete
     js/main.js       login e inicialização
