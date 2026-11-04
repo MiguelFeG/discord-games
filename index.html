@@ -191,6 +191,10 @@ button.sm{padding:4px 9px;font-size:12px}
 .marq:hover .track,.marq:active .track{animation-play-state:paused}
 @keyframes marq{to{transform:translateX(calc(-50% - 6px))}}
 @media(prefers-reduced-motion:reduce){.marq{overflow-x:auto}}
+/* espaçamento do perfil */
+.bact{display:flex;gap:10px;align-items:center;margin-top:14px}
+#pg-perfil .stats{margin-top:20px}
+#pg-perfil .shelf{margin-bottom:8px}
 
 </style>
 </head>
@@ -417,18 +421,19 @@ document.addEventListener('submit',async e=>{
 });
 
 // Perfil: sobre mim e links das plataformas
+let bioEdit=false;
 const NET=[['steam','Steam','🎮'],['xbox','Xbox','🟩'],['playstation','PlayStation','🔵'],['nintendo','Nintendo','🔴']];
 const netTxt=v=>/^https?:\/\//i.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v.replace(/^https?:\/\/(www\.)?/i,'').slice(0,40))}</a>`:esc(v);
 function bioHtml(p,own){
-  const view=`<div class="rv">${p.about?esc(p.about):'<span style="color:var(--mut)">Nada escrito ainda.</span>'}</div><div class="nets">${NET.filter(([k])=>p[k]).map(([k,l,i])=>`<span class="net">${i} <b>${l}</b> ${netTxt(p[k])}</span>`).join('')}</div>`;
-  const form=`<form id="pfrm"><textarea id="ab" maxlength="500" rows="4" placeholder="Sobre mim: o que você joga, gêneros favoritos…">${esc(p.about||'')}</textarea><div class="netg">${NET.map(([k,l,i])=>`<label class="h">${i} ${l}<input id="n_${k}" maxlength="120" placeholder="usuário ou link" value="${esc(p[k]||'')}"></label>`).join('')}</div><button>Salvar perfil</button></form>`;
-  return `<h2 class="sec"><i>📝</i><span>Sobre<small>quem é e onde jogar</small></span></h2><div class="card">${own?form:view}</div>`;
+  const view=`<div class="rv">${p.about?esc(p.about):`<span style="color:var(--mut)">Nada escrito ainda.${own?' Clique em Editar perfil para contar sobre você.':''}</span>`}</div><div class="nets">${NET.filter(([k])=>p[k]).map(([k,l,i])=>`<span class="net">${i} <b>${l}</b> ${netTxt(p[k])}</span>`).join('')}</div>`;
+  const form=`<form id="pfrm"><textarea id="ab" maxlength="500" rows="4" placeholder="Sobre mim: o que você joga, gêneros favoritos…">${esc(p.about||'')}</textarea><div class="netg">${NET.map(([k,l,i])=>`<label class="h">${i} ${l}<input id="n_${k}" maxlength="120" placeholder="usuário ou link" value="${esc(p[k]||'')}"></label>`).join('')}</div><div class="bact"><button>Salvar perfil</button><button type="button" class="ghost" data-a="biocancel">Cancelar</button></div></form>`;
+  return `<h2 class="sec"><i>📝</i><span>Sobre<small>quem é e onde jogar</small></span></h2><div class="card">${own&&bioEdit?form:view}${own&&!bioEdit?'<div class="bact"><button class="chip" data-a="bioedit">✏️ Editar perfil</button></div>':''}</div>`;
 }
 document.addEventListener('submit',async e=>{
   if(e.target.id!=='pfrm')return;e.preventDefault();
   const v=i=>$(i).value.trim()||null,o={about:v('ab')};NET.forEach(([k])=>o[k]=v('n_'+k));
   const r=await sb.from('profiles').update(o).eq('id',me);
-  say(r.error?'Não foi possível salvar o perfil.':'Perfil salvo!');if(!r.error)load();
+  say(r.error?'Não foi possível salvar o perfil.':'Perfil salvo!');if(!r.error){bioEdit=false;load()}
 });
 
 // Insígnias por jogos zerados (só jogos confirmados, sem contar marcos de jogos infinitos)
@@ -518,6 +523,8 @@ document.addEventListener('click',async e=>{
   if(a==='add')openForm();
   else if(a==='close')closeAll();
   else if(a==='det')det(id);
+  else if(a==='bioedit'){bioEdit=true;render()}
+  else if(a==='biocancel'){bioEdit=false;render()}
   else if(a==='rx')rxTap(t.dataset.t,id,t.dataset.k);
   else if(a==='cdel'){const r=await sb.from('comments').delete().eq('id',id);if(r.error)say('Não foi possível apagar o comentário.');else{await load();if(curDet)det(curDet)}}
   else if(a==='closedp')$('dp').hidden=true;
