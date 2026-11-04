@@ -18,7 +18,7 @@ function rxPaint(t,id){const el=document.querySelector(`.rx[data-rx="${t}:${id}"
 function rxTap(t,id,k){
   if(ownerOf(t,id)===me||rxMine(t,id)||(round&&!(round.t===t&&round.id===id)))return;
   if(!round){round={t,id,l:0,d:0,left:RX.secs,t0:Date.now()};round.iv=setInterval(()=>{round.left--;if(round.left<=0)rxEnd();else rxPaint(round.t,round.id)},1000)}
-  round[k]++;rxPaint(t,id);
+  round[k]++;rxPaint(t,id);quack(k==='l');
 }
 async function rxEnd(){
   const r=round;if(!r)return;clearInterval(r.iv);round=null;
