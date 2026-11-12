@@ -275,6 +275,18 @@ body.hasside #app{max-width:980px;margin:0 auto}
 .nwb p{margin:0;font-size:13px;color:var(--mut);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .nwb small{margin-top:auto;color:var(--mut)}.nwb .tag{align-self:flex-start}
 .tag.bad{background:rgba(237,66,69,.25)}
+/* central de jogos */
+.lh{margin:26px 0 12px;font-family:var(--px);font-size:11px;line-height:1.6;color:var(--mut)}.lh small{color:var(--tx)}
+.stb{position:absolute;top:32px;left:6px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:#1a1530}
+.lib.playing .stb{background:#6fe39a}.lib.backlog .stb{background:#ffd76a}.lib.dropped .stb{background:#ff8f8f}
+.ln{margin:0;font-size:12px;color:var(--mut);font-style:italic;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lr{font-size:12px;color:#ff9a9a}
+.mates{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:11px;color:var(--mut)}
+.lact{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}.lact .chip{padding:5px 10px;font-size:12px}
+.lf{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;align-items:end}
+.lf>*{grid-column:auto}.lf #lt,.lf #ln,.lf #lr{grid-column:1/-1}
+.lf[data-s="playing"] .only-b,.lf[data-s="playing"] .only-d,.lf[data-s="backlog"] .only-d,.lf[data-s="dropped"] .only-b{display:none!important}
+@media(max-width:700px){.lf{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -290,7 +302,7 @@ body.hasside #app{max-width:980px;margin:0 auto}
 <section id="app" hidden>
   <aside id="side">
     <div class="sbrand"><svg viewBox="0 0 64 64" width="40" height="40"><rect width="64" height="64" rx="16" fill="url(#lg)"/><path d="M18 24h28c5 0 8 4 9 10l2 8c1 4-2 7-6 6-3 0-5-2-7-4H20c-2 2-4 4-7 4-4 1-7-2-6-6l2-8c1-6 4-10 9-10z" fill="#fff"/><path d="M22 29v8M18 33h8" stroke="#5865f2" stroke-width="3" stroke-linecap="round"/><circle cx="41" cy="31" r="2.4" fill="#5865f2"/><circle cx="46" cy="36" r="2.4" fill="#5865f2"/></svg><div class="bn">DISCORD<br><span>GAMES</span></div></div>
-    <nav id="nav"><div class="ng">Principal</div><a href="#/home" data-p="home">Home</a><a href="#/estante" data-p="estante">Estante</a><a href="#/noticias" data-p="noticias">Notícias</a><div class="ng">Competição</div><a href="#/rankings" data-p="rankings">Rankings</a><a href="#/aguardando" data-p="aguardando">Aguardando <span id="pcnt"></span></a><a href="#/quero" data-p="quero">Quero jogar</a><div class="ng">Você</div><a href="#/perfil" data-p="perfil">Perfil</a></nav>
+    <nav id="nav"><div class="ng">Principal</div><a href="#/home" data-p="home">Home</a><a href="#/estante" data-p="estante">Estante</a><a href="#/noticias" data-p="noticias">Notícias</a><div class="ng">Competição</div><a href="#/rankings" data-p="rankings">Rankings</a><a href="#/aguardando" data-p="aguardando">Aguardando <span id="pcnt"></span></a><a href="#/quero" data-p="quero">Quero jogar</a><div class="ng">Biblioteca</div><a href="#/central" data-p="central">Central da galera</a><a href="#/minha" data-p="minha">Minha central</a><div class="ng">Você</div><a href="#/perfil" data-p="perfil">Perfil</a></nav>
     <div class="suser" id="suser"></div>
   </aside>
   <div id="sback" data-a="menu"></div>
@@ -311,6 +323,8 @@ body.hasside #app{max-width:980px;margin:0 auto}
     <h2 class="sec"><span>Estante<small>toda a coleção da galera</small></span></h2><div class="chips" id="pc"></div><div class="shelf" id="shelf"></div>
   </div>
   <div id="pg-noticias" hidden></div>
+  <div id="pg-central" hidden></div>
+  <div id="pg-minha" hidden></div>
   <div id="pg-quero" hidden></div>
   <div id="pg-rankings" hidden></div>
   <div id="pg-aguardando" hidden></div>
@@ -364,7 +378,7 @@ const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 const days=g=>Math.round((new Date(g.end_date+'T00:00')-new Date(g.start_date+'T00:00'))/864e5)+1;
 const fd=s=>s?s.split('-').reverse().join('/'):'';
 const fdt=s=>s?new Date(s).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'';
-let podSig='',lastLead=null,cmts=[],reacts=[],wishes=[],wvotes=[],chals=[];
+let podSig='',lastLead=null,cmts=[],reacts=[],wishes=[],wvotes=[],chals=[],library=[],pre=null;
 const name=u=>profs[u]?.name||'Jogador';
 const hue=s=>[...String(s)].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,0);
 const grad=s=>{const h=hue(s);return `linear-gradient(145deg,hsl(${h} 70% 48%),hsl(${(h+55)%360} 70% 28%))`};
@@ -386,28 +400,29 @@ function dateErr(g){
 
 // Carregamento dos dados do Supabase
 async function load(){
-  const [g,p,c,s,a,cm,rx,wl,wv,ch]=await Promise.all([
+  const [g,p,c,s,a,cm,rx,wl,wv,ch,lb]=await Promise.all([
     sb.from('games').select('*').order('end_date',{ascending:false}),
     sb.from('profiles').select('*'),sb.from('confirmations').select('*'),
     sb.from('settings').select('deadline').eq('id',1).maybeSingle(),
     sb.from('admins').select('user_id').maybeSingle(),
     sb.from('comments').select('*').order('created_at'),sb.from('reactions').select('*'),
-    sb.from('wishlist').select('*').order('created_at',{ascending:false}),sb.from('wish_votes').select('*'),sb.from('challenges').select('*').order('month',{ascending:false})]);
+    sb.from('wishlist').select('*').order('created_at',{ascending:false}),sb.from('wish_votes').select('*'),sb.from('challenges').select('*').order('month',{ascending:false}),
+    sb.from('library').select('*').order('updated_at',{ascending:false})]);
   if(g.error){say('Erro ao carregar os dados: '+g.error.message);return}
-  games=g.data||[];profs=Object.fromEntries((p.data||[]).map(x=>[x.id,x]));confs=c.data||[];cmts=cm.data||[];reacts=rx.data||[];wishes=wl.data||[];wvotes=wv.data||[];chals=ch.data||[];
+  games=g.data||[];profs=Object.fromEntries((p.data||[]).map(x=>[x.id,x]));confs=c.data||[];cmts=cm.data||[];reacts=rx.data||[];wishes=wl.data||[];wvotes=wv.data||[];chals=ch.data||[];library=lb.data||[];
   deadline=s.data?.deadline||null;isAdmin=!!a.data;render();
 }
 
 // Telas: Home, Estante, Perfil, cards e pop-up do jogo
 function board(f,m){const by={};games.filter(f).forEach(g=>(by[g.user_id]||(by[g.user_id]=[])).push(g));return Object.entries(by).map(([u,l])=>({u,n:l.filter(g=>g.kind!=='milestone').length,h:l.reduce((s,g)=>s+ +g.hours,0),p:sumPts(l)+bonus(u,m||'')})).sort((a,b)=>b.p-a.p||a.h-b.h)}
-function route(){const h=location.hash.replace(/^#\/?/,'').split('/');return{pg:['home','estante','noticias','quero','rankings','aguardando','perfil'].includes(h[0])?h[0]:'home',id:h[1]||me}}
+function route(){const h=location.hash.replace(/^#\/?/,'').split('/');return{pg:['home','estante','noticias','central','minha','quero','rankings','aguardando','perfil'].includes(h[0])?h[0]:'home',id:h[1]||me}}
 const tile=(l,v)=>`<div class="stat"><small>${l}</small><b>${v}</b></div>`;
 function render(){
   if(!me)return;
   const {pg,id}=route(),all=board(ok);
   document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('on',a.dataset.p===pg));
-  $('ptitle').textContent=({home:'Home',estante:'Estante',noticias:'Notícias',quero:'Quero jogar',rankings:'Rankings',aguardando:'Aguardando',perfil:'Perfil'})[pg]||'';
-  ['home','estante','noticias','quero','rankings','aguardando','perfil'].forEach(p=>$('pg-'+p).hidden=p!==pg);
+  $('ptitle').textContent=({home:'Home',estante:'Estante',noticias:'Notícias',quero:'Quero jogar',rankings:'Rankings',aguardando:'Aguardando',perfil:'Perfil',central:'Central da galera',minha:'Minha central'})[pg]||'';
+  ['home','estante','noticias','central','minha','quero','rankings','aguardando','perfil'].forEach(p=>$('pg-'+p).hidden=p!==pg);
   let h='';
   if(deadline){
     const left=Math.ceil((new Date(deadline+'T23:59:59')-new Date())/864e5);
@@ -417,7 +432,7 @@ function render(){
   $('dl').innerHTML=h;bellRender();
   $('suser').innerHTML=profs[me]?`${av(me,40)}<div><b>${esc(name(me))}</b><small>${topBadge(me)}</small></div><button class="ghost sm" data-a="out">Sair</button>`:'';
   {const n=games.filter(g=>g.user_id!==me&&nconf(g)<CFG.confirms&&!confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev)).length;$('pcnt').textContent=n?`(${n})`:''}
-  if(pg==='home')home(board(counts,mo),all);else if(pg==='estante')estante();else if(pg==='quero')quero();else if(pg==='noticias')noticias();else if(pg==='rankings'){rankings();rankExtras()}else if(pg==='aguardando')aguardando();else perfil(id);
+  if(pg==='home')home(board(counts,mo),all);else if(pg==='estante')estante();else if(pg==='quero')quero();else if(pg==='noticias')noticias();else if(pg==='central')central();else if(pg==='minha')minha();else if(pg==='rankings'){rankings();rankExtras()}else if(pg==='aguardando')aguardando();else perfil(id);
 }
 function home(arr,all){chRender();feedRender();
   const okg=games.filter(ok),hrs=okg.reduce((s,g)=>s+ +g.hours,0);
@@ -443,7 +458,7 @@ function perfil(id){
   const own=id===me,mine=games.filter(g=>g.user_id===id),okm=mine.filter(ok),pt=sumPts(okm)+bonus(id,''),hrs=okm.reduce((s,g)=>s+ +g.hours,0),rs=mine.filter(g=>g.rating!=null),avg=rs.length?Math.round(rs.reduce((s,g)=>s+ +g.rating,0)/rs.length*10)/10:'—';
   $('pg-perfil').innerHTML=`<div class="card prof">${av(id,96)}<div><h2 style="margin:0">${esc(p.name)} ${topBadge(id)}</h2><div class="bs">${okm.length} ${okm.length===1?'jogo confirmado':'jogos confirmados'}</div>${own?`<div class="chips" style="margin:10px 0 0"><label class="chip" style="cursor:pointer">📷 Trocar foto<input type="file" id="avf" accept="image/*" hidden></label><button class="chip" data-a="nick">✏️ Trocar apelido</button>${gAvatar?'<button class="chip" data-a="gphoto">↩ Usar foto do Google</button>':''}</div>`:''}</div></div>
   ${bioHtml(p,own)}${badgesHtml(id)}<div class="stats">${tile('⭐ Pontos',pt)}${tile('✅ Confirmados',okm.length)}${tile('📝 Registrados',mine.length)}${tile('⏱️ Horas totais',Math.round(hrs*10)/10+' h')}${tile('🎯 Nota média',avg)}</div>
-  <h2 class="sec"><span>${own?'Meus jogos':'Jogos de '+esc(p.name)}<small>pontos e comprovantes</small></span></h2>
+  ${libProfile(id)}<h2 class="sec"><span>${own?'Meus jogos':'Jogos de '+esc(p.name)}<small>pontos e comprovantes</small></span></h2>
   <div class="shelf">${mine.map(card).join('')||'<div class="empty" style="grid-column:1/-1">Nenhum jogo registrado.</div>'}</div>`;
 }
 
@@ -655,6 +670,7 @@ function feedItems(){
   cmts.forEach(c=>{const g=G(c.game_id);if(g)L.push({t:c.created_at,u:c.user_id,g:g.id,x:`comentou em <b>${esc(g.title)}</b>: “${esc(c.body.length>70?c.body.slice(0,70)+'…':c.body)}”`})});
   wishes.forEach(w=>L.push({t:w.created_at,u:w.user_id,n:'quero',x:`sugeriu <b>${esc(w.title)}</b> em Quero jogar`}));
   chals.forEach(c=>L.push({t:c.created_at,u:c.created_by,x:`criou o desafio <b>${esc(c.title)}</b> (+${c.bonus} pts)`}));
+  library.forEach(l=>L.push({t:l.updated_at||l.created_at,u:l.user_id,n:'central',x:l.status==='playing'?`está jogando <b>${esc(l.title)}</b>`:l.status==='backlog'?`guardou <b>${esc(l.title)}</b> na fila`:`abandonou <b>${esc(l.title)}</b>`}));
   return L.filter(i=>i.t).sort((a,b)=>String(b.t).localeCompare(String(a.t))).slice(0,15);
 }
 function feedRender(){
@@ -763,6 +779,67 @@ function renderNews(){
   el.innerHTML=`${titulo('Notícias','o que está rolando no mundo dos jogos')}<div class="bact" style="margin:0 0 14px"><button class="chip" data-a="newsrefresh">Atualizar</button>${news.busy?'<small>Carregando…</small>':news.t?`<small style="color:var(--mut)">Atualizado ${ago(new Date(news.t).toISOString())}</small>`:''}</div><div class="ngrid">${cards||`<div class="empty" style="grid-column:1/-1">${news.busy?'Buscando notícias…':'Nenhuma notícia carregada. Tente Atualizar.'}</div>`}</div><div class="avs" style="margin-top:16px">${st}</div>`;
 }
 
+// Central de jogos: jogando, na fila e abandonados (Central da galera, Minha central e seção do perfil)
+const ST={playing:'Jogando',backlog:'Na fila',dropped:'Abandonado'},PRI={1:'Alta',2:'Média',3:'Baixa'};
+let cst='',cpl='',libEdit=null;
+const mates=it=>library.filter(x=>x.user_id!==it.user_id&&x.status==='playing'&&normT(x.title)===normT(it.title));
+const libN=(list,s)=>list.filter(x=>x.status===s).length;
+function libStats(u){
+  const L=library.filter(x=>x.user_id===u),z=games.filter(g=>g.user_id===u&&g.kind!=='milestone').length,d=libN(L,'dropped');
+  return {j:libN(L,'playing'),f:libN(L,'backlog'),d,r:(z+d)?Math.round(d/(z+d)*100)+'%':'—'};
+}
+function libCard(it,act){
+  const ini=it.title.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase(),m=mates(it);
+  const extra=it.status==='backlog'?`<span class="tag">Prioridade ${PRI[it.priority]||'Média'}</span>`:(it.status==='dropped'&&it.drop_reason?`<span class="lr">Motivo: ${esc(it.drop_reason)}</span>`:'');
+  const b=(a,l)=>`<button class="chip" data-a="${a}" data-id="${it.id}">${l}</button>`;
+  const btns=act?(it.status==='playing'?b('lzerei','Zerei')+b('ldrop','Abandonar'):b('lstart',it.status==='backlog'?'Começar a jogar':'Retomar')):'';
+  return `<div class="g lib ${it.status}">${it.cover_url?`<div class="cv" style="background-image:url('${esc(it.cover_url)}')"></div>`:`<div class="cv" style="background:${grad(it.title)}">${esc(ini)}</div>`}${it.platform?`<span class="pfb">${esc(it.platform)}</span>`:''}<span class="stb">${ST[it.status]}</span><div class="cap"><b class="tt">${esc(it.title)}</b><span class="by" data-a="prof" data-id="${it.user_id}">${av(it.user_id,20)}${esc(name(it.user_id))}</span><div class="mt"><span>⏱ ${it.hours||0}h</span>${extra}</div>${it.note?`<p class="ln">“${esc(it.note)}”</p>`:''}${m.length?`<div class="mates">Também jogando: ${m.map(x=>`<span data-a="prof" data-id="${x.user_id}" title="${esc(name(x.user_id))}">${av(x.user_id,20)}</span>`).join('')}</div>`:''}${btns?`<div class="lact">${btns}</div>`:''}</div>${act?`<button class="del" style="right:38px" data-a="ledit" data-id="${it.id}" title="Editar">✎</button><button class="del" data-a="ldel" data-id="${it.id}" title="Remover">✕</button>`:''}</div>`;
+}
+function groupHtml(L,act){
+  return ['playing','backlog','dropped'].map(s=>{
+    let l=L.filter(x=>x.status===s);
+    if(s==='backlog')l=l.slice().sort((a,b)=>(a.priority||2)-(b.priority||2));
+    return l.length?`<h3 class="lh">${ST[s]} <small>${l.length}</small></h3><div class="shelf">${l.map(x=>libCard(x,act)).join('')}</div>`:'';
+  }).join('')||'<div class="empty">Nenhum jogo na central ainda.</div>';
+}
+function libProfile(id){
+  const s=libStats(id);
+  return `${titulo('Central de jogos','jogando, na fila e abandonados')}<div class="stats">${tile('Jogando',s.j)}${tile('Na fila',s.f)}${tile('Abandonados',s.d)}${tile('Taxa de abandono',s.r)}</div><div style="margin-top:12px">${groupHtml(library.filter(x=>x.user_id===id),false)}</div>`;
+}
+function central(){
+  const owners=[...new Set(library.map(x=>x.user_id))];
+  const L=library.filter(x=>(!cst||x.status===cst)&&(!cpl||x.user_id===cpl));
+  const shame=Object.entries(library.filter(x=>x.status==='backlog').reduce((o,x)=>(o[x.user_id]=(o[x.user_id]||0)+1,o),{})).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const chip=(k,v,l,on)=>`<button class="chip${on?' on':''}" data-a="cfilter" data-k="${k}" data-v="${v}">${l}</button>`;
+  $('pg-central').innerHTML=`${titulo('Central da galera','o que todo mundo está jogando, guardando e largando')}<div class="stats">${tile('Jogando agora',libN(library,'playing'))}${tile('Na fila',libN(library,'backlog'))}${tile('Abandonados',libN(library,'dropped'))}${tile('Jogadores',owners.length)}</div>${shame.length?`<div class="card" style="margin-top:16px"><h3 class="lh" style="margin-top:0">Pilha da vergonha</h3>${shame.map(([u,n],i)=>`<div class="rkr" data-a="prof" data-id="${u}"><span class="rkp">${i+1}</span>${av(u,28)}<b>${esc(name(u))}</b><span class="rkv">${n} na fila</span></div>`).join('')}</div>`:''}<div class="chips" style="margin-top:16px">${chip('s','','Todos',!cst)}${Object.keys(ST).map(s=>chip('s',s,ST[s],cst===s)).join('')}</div><div class="chips">${chip('p','','Todos os jogadores',!cpl)}${owners.map(u=>chip('p',u,esc(name(u)),cpl===u)).join('')}</div>${groupHtml(L,false)}`;
+}
+function minha(){
+  const s=libStats(me);
+  $('pg-minha').innerHTML=`${titulo('Minha central','seus jogos em andamento, na fila e abandonados')}<div class="stats">${tile('Jogando',s.j)}${tile('Pilha da vergonha',s.f+' na fila')}${tile('Abandonados',s.d)}${tile('Taxa de abandono',s.r)}</div><form id="lf" class="card lf" data-s="playing" style="margin-top:16px"><input id="lt" maxlength="80" placeholder="Nome do jogo"><select id="ls"><option value="playing">Jogando</option><option value="backlog">Na fila (jogar depois)</option><option value="dropped">Abandonado</option></select><select id="lp"><option value="">Plataforma</option><option>PC</option><option>PlayStation</option><option>Xbox</option><option>Nintendo</option><option>Celular</option><option>Outro</option></select><label class="h">Horas jogadas<input id="lh" type="number" min="0" max="99999" step="0.5" placeholder="0"></label><label class="h only-b">Prioridade na fila<select id="lpr"><option value="1">Alta</option><option value="2" selected>Média</option><option value="3">Baixa</option></select></label><input class="only-d" id="lr" maxlength="200" placeholder="Motivo do abandono"><input id="ln" maxlength="300" placeholder="Anotação curta (opcional)"><label class="file" id="lc">Capa (opcional)<input type="file" id="li" accept="image/*"></label><button id="lsb">Adicionar à central</button><button type="button" class="ghost" id="lcx" data-a="lcancel" hidden>Cancelar</button></form>${groupHtml(library.filter(x=>x.user_id===me),true)}`;
+  if(libEdit){const it=library.find(x=>x.id===libEdit);if(it)fillLib(it);else libEdit=null}
+}
+function fillLib(it){
+  $('lt').value=it.title;$('ls').value=it.status;$('lf').dataset.s=it.status;$('lp').value=it.platform||'';$('lh').value=it.hours||'';
+  $('lpr').value=String(it.priority||2);$('lr').value=it.drop_reason||'';$('ln').value=it.note||'';
+  $('lsb').textContent='Salvar alterações';$('lcx').hidden=false;
+}
+function zerei(id){
+  const it=library.find(x=>x.id===id);if(!it)return;
+  openForm();$('t').value=it.title;$('hr').value=it.hours||'';$('pf2').value=it.platform||'';
+  pre={id:it.id,cover:it.cover_url||null};pv();
+}
+document.addEventListener('change',e=>{if(e.target.id==='ls'&&$('lf'))$('lf').dataset.s=e.target.value});
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='lf')return;e.preventDefault();
+  const t=$('lt').value.trim();if(!t)return say('Informe o nome do jogo.');
+  const s=$('ls').value,o={title:t,status:s,platform:$('lp').value||null,hours:parseFloat($('lh').value)||0,priority:s==='backlog'?(parseInt($('lpr').value)||2):null,drop_reason:s==='dropped'?($('lr').value.trim()||null):null,note:$('ln').value.trim()||null,updated_at:new Date().toISOString()};
+  const f=$('li').files[0];
+  try{if(f)o.cover_url=await up(f,360)}catch(err){return say('Não consegui enviar a capa.')}
+  const r=libEdit?await sb.from('library').update(o).eq('id',libEdit):await sb.from('library').insert(o);
+  if(r.error)return say('Não foi possível salvar: '+r.error.message);
+  libEdit=null;say('Salvo na central!');load();
+});
+
 // Imagens: redução, envio e foto de perfil
 function shrink(file,mw){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{let w=Math.min(mw,im.width),h=Math.round(im.height*w/im.width);if(h>mw*1.5){h=Math.round(mw*1.5);w=Math.round(im.width*h/im.height)}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(u);cv.toBlob(b=>b?res(b):rej(),'image/jpeg',.82)};im.onerror=rej;im.src=u})}
 async function upBlob(b){const path=`${me}/${crypto.randomUUID()}.jpg`;const {error}=await sb.storage.from('imagens').upload(path,b,{contentType:'image/jpeg'});if(error)throw error;return sb.storage.from('imagens').getPublicUrl(path).data.publicUrl}
@@ -780,7 +857,7 @@ $('kd').addEventListener('change',()=>{$('f').dataset.k=$('kd').value;pv()});
 $('prf').onchange=e=>{$('pl').firstChild.nodeValue=e.target.files[0]?'🧾 '+e.target.files[0].name:'🧾 Comprovante *'};
 $('img').onchange=e=>{$('fl').firstChild.nodeValue=e.target.files[0]?'📷 '+e.target.files[0].name:'📷 Capa (opcional)'};
 
-function openForm(id){
+function openForm(id){pre=null;
   editing=id||null;const g=id?games.find(x=>x.id===id):null;$('f').reset();$('f').dataset.k='game';
   $('fl').firstChild.nodeValue='📷 Capa (opcional)';$('pl').firstChild.nodeValue='🧾 Comprovante *';
   if(g){$('kd').value=g.kind||'game';$('f').dataset.k=$('kd').value;$('ms').value=g.milestone||'';$('tr').value=g.tier||'';$('t').value=g.title;$('hr').value=g.hours;$('ds').value=g.start_date;$('dt').value=g.end_date;$('df').value=String(g.difficulty);$('pl100').checked=g.platinum;$('pf2').value=g.platform||'';$('nt').value=g.rating??'';$('cm').value=g.comment||''}
@@ -800,10 +877,10 @@ $('f').onsubmit=async e=>{
     if(!(g.hours>0)||!g.difficulty)return say('Informe as horas jogadas e a dificuldade.');
     const de=dateErr(g);if(de)return say(de);
     g.proof_url=pfile?await up(pfile,1000):ed.proof_url;
-    g.cover_url=cfile?await up(cfile,360):(ed?ed.cover_url:null);
+    g.cover_url=cfile?await up(cfile,360):(ed?ed.cover_url:(pre?pre.cover:null));
     const r=ed?await sb.from('games').update(g).eq('id',ed.id):await sb.from('games').insert(g);
     if(r.error)return say('Não foi possível salvar: '+r.error.message);
-    closeAll();await load();
+    if(pre){await sb.from('library').delete().eq('id',pre.id)}closeAll();await load();
   }catch(err){say('Não consegui enviar a imagem. Tente de novo.')}
   finally{btn.disabled=false}
 };
@@ -833,6 +910,13 @@ document.addEventListener('click',async e=>{
   else if(a==='bdet'){bellOpen=false;bellRender();det(id)}
   else if(a==='menu')document.body.classList.toggle('menu-open');
   else if(a==='newsrefresh')loadNews(true);
+  else if(a==='cfilter'){if(t.dataset.k==='s')cst=t.dataset.v;else cpl=t.dataset.v;render()}
+  else if(a==='ledit'){libEdit=id;render()}
+  else if(a==='lcancel'){libEdit=null;render()}
+  else if(a==='ldel'){if(confirm('Remover este jogo da central?')){const r=await sb.from('library').delete().eq('id',id);if(r.error)say('Não foi possível remover.');else load()}}
+  else if(a==='lstart'){const r=await sb.from('library').update({status:'playing',updated_at:new Date().toISOString()}).eq('id',id);if(r.error)say('Não foi possível atualizar.');else load()}
+  else if(a==='ldrop'){const why=prompt('Por que você abandonou? (opcional)');if(why===null)return;const r=await sb.from('library').update({status:'dropped',drop_reason:why.trim().slice(0,200)||null,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)say('Não foi possível atualizar.');else load()}
+  else if(a==='lzerei')zerei(id);
   else if(a==='rx')rxTap(t.dataset.t,id,t.dataset.k);
   else if(a==='cdel'){const r=await sb.from('comments').delete().eq('id',id);if(r.error)say('Não foi possível apagar o comentário.');else{await load();if(curDet)det(curDet)}}
   else if(a==='closedp')$('dp').hidden=true;
