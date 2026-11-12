@@ -314,7 +314,7 @@ body.hasside #app{max-width:980px;margin:0 auto}
   <div id="pg-home">
     <div class="card cta"><div><b>Zerou um jogo?</b><div class="bs">Registre com comprovante e peça para um amigo confirmar.</div></div><button data-a="add">➕ Registrar jogo</button></div>
     <h2 class="sec"><span>Resumo<small>a competição em números</small></span></h2><div class="stats" id="sum"></div>
-    <h2 class="sec"><span>Desafios do mês<small>bônus em pontos para quem cumprir</small></span></h2><div id="chl"></div>
+    <h2 class="sec"><span>Desafio da semana<small>sorteado automaticamente toda segunda-feira</small></span></h2><div id="chl"></div>
     <h2 class="sec"><span>Pódio<small>ranking por pontos</small></span></h2><div class="chips" id="mc"></div><div class="card" id="pod"></div>
     <h2 class="sec"><span>Últimos zerados<small>o que saiu do forno</small></span></h2><div class="marq" id="rec"></div>
     <h2 class="sec"><span>Atividade recente<small>o que a galera andou fazendo</small></span></h2><div class="card feed" id="feed"></div>
@@ -429,7 +429,7 @@ function render(){
     h=left>=0?`<span class="dl">⏳ ${left===0?'Último dia!':`Faltam <b>${left}</b> ${left===1?'dia':'dias'}`} · encerra em ${fd(deadline)}</span>`:`<span class="dl end">🏁 Competição encerrada em ${fd(deadline)}${all[0]?` · Campeão: <b>${esc(name(all[0].u))}</b> (${all[0].p} pts)`:''}</span>`;
   }
   if(isAdmin)h+=`<input type="date" id="dli" value="${deadline||''}"><button class="chip" data-a="dls">salvar prazo</button>${deadline?'<button class="chip" data-a="dlc">remover prazo</button>':''}`;
-  $('dl').innerHTML=h;bellRender();
+  $('dl').innerHTML=h;bellRender();ensureOnce();
   $('suser').innerHTML=profs[me]?`${av(me,40)}<div><b>${esc(name(me))}</b><small>${topBadge(me)}</small></div><button class="ghost sm" data-a="out">Sair</button>`:'';
   {const n=games.filter(g=>g.user_id!==me&&nconf(g)<CFG.confirms&&!confs.some(c=>c.game_id===g.id&&c.user_id===me&&c.rev===g.rev)).length;$('pcnt').textContent=n?`(${n})`:''}
   if(pg==='home')home(board(counts,mo),all);else if(pg==='estante')estante();else if(pg==='quero')quero();else if(pg==='noticias')noticias();else if(pg==='central')central();else if(pg==='minha')minha();else if(pg==='rankings'){rankings();rankExtras()}else if(pg==='aguardando')aguardando();else perfil(id);
@@ -574,33 +574,37 @@ function aguardando(){
   $('pg-aguardando').innerHTML=sec('✅','Para eu confirmar','jogos dos amigos esperando você',forMe,'Nada para confirmar agora. 🎉')+sec('⏳','Os meus aguardando','esperando a aprovação de um amigo',mine,'Nenhum jogo seu aguardando.');
 }
 
-// Desafios mensais: jogo do mês e metas (os bônus entram nos pontos do ranking)
+// Desafios semanais automáticos: o servidor sorteia um por semana (função ensure_weekly_challenge), igual para todos
+// Desafios antigos criados à mão (sem semana) continuam valendo no mês deles.
 const normT=s=>String(s||'').trim().toLowerCase();
-const chGames=(c,u)=>games.filter(g=>g.user_id===u&&g.kind!=='milestone'&&ok(g)&&g.end_date.slice(0,7)===c.month);
+const inCh=(c,g)=>c.week_start?(g.end_date>=c.week_start&&g.end_date<=c.week_end):g.end_date.slice(0,7)===c.month;
+const chGames=(c,u)=>games.filter(g=>g.user_id===u&&g.kind!=='milestone'&&ok(g)&&inCh(c,g));
 const chProg=(c,u)=>chGames(c,u).length;
 const chDone=(c,u)=>c.kind==='game'?chGames(c,u).some(g=>normT(g.title)===normT(c.game_title)):chProg(c,u)>=(c.goal_games||0);
 const bonus=(u,m)=>chals.filter(c=>(!m||c.month===m)&&chDone(c,u)).reduce((s,c)=>s+c.bonus,0);
-function chRender(){
-  const cm=today().slice(0,7),[y,mm]=cm.split('-').map(Number),left=Math.ceil((new Date(y,mm,1)-new Date())/864e5);
-  const card=c=>{
-    const done=Object.keys(profs).filter(u=>chDone(c,u));
-    const body=c.kind==='game'
-      ?`<div class="bs">Zere <b>${esc(c.game_title)}</b> neste mês e envie o comprovante.</div>`
-      :`<div class="bs">Zere <b>${c.goal_games}</b> jogos neste mês.</div><div class="chp"><i style="width:${Math.min(100,Math.round(chProg(c,me)/c.goal_games*100))}%"></i></div><small>Você: ${chProg(c,me)}/${c.goal_games}</small>`;
-    return `<div class="card ch"><div class="chh"><b>${esc(c.title)}</b><span class="tag">${c.kind==='game'?'Jogo do mês':'Meta do mês'}</span><span class="tag">+${c.bonus} pts</span>${chDone(c,me)?'<span class="tag">Cumprido</span>':''}${isAdmin?`<button class="ghost sm" data-a="chdel" data-id="${c.id}">Apagar</button>`:''}</div>${body}<div class="avs">${done.map(u=>`<span data-a="prof" data-id="${u}" title="${esc(name(u))}">${av(u,28)}</span>`).join('')||'<small style="color:var(--mut)">Ninguém cumpriu ainda.</small>'}</div></div>`;
-  };
-  const adm=isAdmin?`<details class="card ch"><summary>Criar desafio</summary><form id="chf"><select id="ck"><option value="game">Jogo do mês</option><option value="goal">Meta do mês</option></select><input id="ct" maxlength="60" placeholder="Título do desafio"><input id="cg" maxlength="80" placeholder="Jogo a zerar (para Jogo do mês)"><input id="cn" type="number" min="1" max="30" placeholder="Meta de jogos (para Meta do mês)"><input id="cmo" type="month" value="${cm}"><input id="cb" type="number" min="1" max="500" placeholder="Bônus em pontos"><button>Criar desafio</button></form></details>`:'';
-  $('chl').innerHTML=(chals.filter(c=>c.month===cm).map(card).join('')||'<div class="empty">Nenhum desafio neste mês.</div>')+`<small style="color:var(--mut)">Faltam ${left} ${left===1?'dia':'dias'} para o fim do mês.</small>`+adm;
+let ensured=false;
+async function ensureWeekly(){
+  try{
+    await sb.rpc('ensure_weekly_challenge');
+    const r=await sb.from('challenges').select('*').order('created_at',{ascending:false});
+    if(r.data){chals=r.data;render()}
+  }catch(e){}
 }
-document.addEventListener('submit',async e=>{
-  if(e.target.id!=='chf')return;e.preventDefault();
-  const k=$('ck').value,o={kind:k,title:$('ct').value.trim(),month:$('cmo').value,bonus:parseInt($('cb').value)||0,game_title:k==='game'?($('cg').value.trim()||null):null,goal_games:k==='goal'?(parseInt($('cn').value)||null):null};
-  if(!o.title||!o.month||!o.bonus)return say('Informe título, mês e bônus.');
-  if(k==='game'&&!o.game_title)return say('Informe o jogo do mês.');
-  if(k==='goal'&&!o.goal_games)return say('Informe a meta de jogos.');
-  const r=await sb.from('challenges').insert(o);
-  say(r.error?'Não foi possível criar o desafio.':'Desafio criado!');if(!r.error)load();
-});
+function ensureOnce(){if(!ensured&&me){ensured=true;ensureWeekly()}}
+function chCard(c,live){
+  const done=Object.keys(profs).filter(u=>chDone(c,u)),when=c.week_start?'nesta semana':'neste mês';
+  const per=c.week_start?`${fd(c.week_start).slice(0,5)} a ${fd(c.week_end).slice(0,5)}`:mlab(c.month);
+  const left=c.week_end?Math.ceil((new Date(c.week_end+'T23:59:59')-new Date())/864e5):0;
+  const body=c.kind==='game'
+    ?`<div class="bs">Zere <b>${esc(c.game_title)}</b> ${when} e envie o comprovante.</div>`
+    :`<div class="bs">Zere <b>${c.goal_games}</b> ${c.goal_games===1?'jogo':'jogos'} ${when}.</div><div class="chp"><i style="width:${Math.min(100,Math.round(chProg(c,me)/c.goal_games*100))}%"></i></div><small>Você: ${chProg(c,me)}/${c.goal_games}</small>`;
+  return `<div class="card ch"><div class="chh"><b>${esc(c.title)}</b><span class="tag">${c.kind==='game'?'Jogo':'Meta'}</span><span class="tag">+${c.bonus} pts</span><span class="tag">${per}</span>${live&&c.week_end?`<span class="tag">${left<=1?'Último dia':left+' dias restantes'}</span>`:''}${chDone(c,me)?'<span class="tag">Cumprido</span>':''}${isAdmin?`<button class="ghost sm" data-a="chdel" data-id="${c.id}">Apagar</button>${live&&c.auto?'<button class="ghost sm" data-a="chreroll">Sortear outro</button>':''}`:''}</div>${body}<div class="avs">${done.map(u=>`<span data-a="prof" data-id="${u}" title="${esc(name(u))}">${av(u,28)}</span>`).join('')||'<small style="color:var(--mut)">Ninguém cumpriu ainda.</small>'}</div></div>`;
+}
+function chRender(){
+  const t=today(),now=chals.filter(c=>c.week_start?(c.week_start<=t&&t<=c.week_end):c.month===t.slice(0,7));
+  const old=chals.filter(c=>c.week_end&&c.week_end<t).sort((a,b)=>b.week_end.localeCompare(a.week_end)).slice(0,4);
+  $('chl').innerHTML=(now.map(c=>chCard(c,true)).join('')||'<div class="empty">O desafio desta semana está sendo sorteado…</div>')+(old.length?`<details class="card ch"><summary>Semanas anteriores</summary><div style="margin-top:12px">${old.map(c=>chCard(c,false)).join('')}</div></details>`:'');
+}
 
 // Quero jogar: sugestões do grupo com votação (1 voto por pessoa em cada jogo)
 function quero(){
@@ -669,12 +673,12 @@ function feedItems(){
   confs.forEach(c=>{const g=G(c.game_id);if(g&&c.created_at)L.push({t:c.created_at,u:c.user_id,g:g.id,x:`confirmou o comprovante de <b>${esc(g.title)}</b> (${esc(name(g.user_id))})`})});
   cmts.forEach(c=>{const g=G(c.game_id);if(g)L.push({t:c.created_at,u:c.user_id,g:g.id,x:`comentou em <b>${esc(g.title)}</b>: “${esc(c.body.length>70?c.body.slice(0,70)+'…':c.body)}”`})});
   wishes.forEach(w=>L.push({t:w.created_at,u:w.user_id,n:'quero',x:`sugeriu <b>${esc(w.title)}</b> em Quero jogar`}));
-  chals.forEach(c=>L.push({t:c.created_at,u:c.created_by,x:`criou o desafio <b>${esc(c.title)}</b> (+${c.bonus} pts)`}));
+  chals.forEach(c=>L.push({t:c.created_at,u:c.created_by,x:c.auto?`Novo desafio da semana: <b>${esc(c.title)}</b> (+${c.bonus} pts)`:`criou o desafio <b>${esc(c.title)}</b> (+${c.bonus} pts)`}));
   library.forEach(l=>L.push({t:l.updated_at||l.created_at,u:l.user_id,n:'central',x:l.status==='playing'?`está jogando <b>${esc(l.title)}</b>`:l.status==='backlog'?`guardou <b>${esc(l.title)}</b> na fila`:`abandonou <b>${esc(l.title)}</b>`}));
   return L.filter(i=>i.t).sort((a,b)=>String(b.t).localeCompare(String(a.t))).slice(0,15);
 }
 function feedRender(){
-  $('feed').innerHTML=feedItems().map(i=>`<div class="fi"${i.g?` data-a="det" data-id="${i.g}"`:i.n?` data-a="nav" data-id="${i.n}"`:''}>${i.u?av(i.u,32):''}<div><b>${esc(name(i.u))}</b> ${i.x}</div><small>${ago(i.t)}</small></div>`).join('')||'<div class="empty">Nada por aqui ainda.</div>';
+  $('feed').innerHTML=feedItems().map(i=>`<div class="fi"${i.g?` data-a="det" data-id="${i.g}"`:i.n?` data-a="nav" data-id="${i.n}"`:''}>${i.u?av(i.u,32):''}<div>${i.u?`<b>${esc(name(i.u))}</b> `:''}${i.x}</div><small>${ago(i.t)}</small></div>`).join('')||'<div class="empty">Nada por aqui ainda.</div>';
 }
 
 // Hall da fama (pódio de cada mês) e gráfico de evolução dos pontos por semana
@@ -917,6 +921,7 @@ document.addEventListener('click',async e=>{
   else if(a==='lstart'){const r=await sb.from('library').update({status:'playing',updated_at:new Date().toISOString()}).eq('id',id);if(r.error)say('Não foi possível atualizar.');else load()}
   else if(a==='ldrop'){const why=prompt('Por que você abandonou? (opcional)');if(why===null)return;const r=await sb.from('library').update({status:'dropped',drop_reason:why.trim().slice(0,200)||null,updated_at:new Date().toISOString()}).eq('id',id);if(r.error)say('Não foi possível atualizar.');else load()}
   else if(a==='lzerei')zerei(id);
+  else if(a==='chreroll'){const r=await sb.rpc('reroll_weekly_challenge');if(r.error)say('Só o administrador pode sortear outro desafio.');else{await ensureWeekly();say('Novo desafio sorteado!')}}
   else if(a==='rx')rxTap(t.dataset.t,id,t.dataset.k);
   else if(a==='cdel'){const r=await sb.from('comments').delete().eq('id',id);if(r.error)say('Não foi possível apagar o comentário.');else{await load();if(curDet)det(curDet)}}
   else if(a==='closedp')$('dp').hidden=true;
